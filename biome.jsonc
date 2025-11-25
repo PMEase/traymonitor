@@ -1,0 +1,77 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+  "extends": ["ultracite"],
+  "files": {
+    "includes": ["**/*.ts", "**/*.tsx", "!**/*.js", "!src/components/ui"]
+  },
+  "linter": {
+    "rules": {
+      "performance": {
+        "noNamespaceImport": "off"
+      }
+    }
+  },
+  "javascript": {
+    "globals": ["Liveblocks", "React"],
+    "formatter": {
+      "indentStyle": "space",
+      "semicolons": "always",
+      "quoteStyle": "double",
+      "trailingCommas": "es5"
+    }
+  },
+  "json": {
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": true
+    },
+    "formatter": {
+      "indentStyle": "space",
+      "trailingCommas": "none"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["package.json"],
+      "json": {
+        "formatter": {
+          "lineWidth": 1
+        }
+      }
+    },
+    {
+      "includes": ["./**/*.stories.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "performance": {
+            "noImgElement": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["./**/*.js"],
+      "linter": {
+        "rules": {}
+      }
+    },
+    {
+      "includes": ["./**/*.css"],
+      "formatter": {
+        "lineWidth": 120,
+        "indentWidth": 2,
+        "indentStyle": "space"
+      },
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noUnknownAtRule": "off"
+          }
+        }
+      }
+    }
+  ]
+}
