@@ -14,10 +14,11 @@
     "core:window:allow-is-fullscreen",
     "core:window:default",
     "core:window:allow-start-dragging",
+    "core:tray:default",
+    "core:tray:allow-get-by-id",
     "opener:default",
     "clipboard-manager:default",
     "dialog:default",
-    "fs:default",
     "log:default",
     "notifications:default",
     "process:default"

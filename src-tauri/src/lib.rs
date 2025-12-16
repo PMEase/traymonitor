@@ -1,3 +1,7 @@
+pub mod logger;
+pub mod path;
+pub mod tray;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -49,11 +53,11 @@ fn validate_theme(theme: &str) -> Result<(), String> {
 fn greet(name: &str) -> String {
     // Input validation
     if let Err(e) = validate_string_input(name, 100, "Name") {
-        log::warn!("Invalid greet input: {e}");
+        logger::warn!("Invalid greet input: {e}");
         return format!("Error: {e}");
     }
 
-    log::info!("Greeting user: {name}");
+    logger::info!("Greeting user: {name}");
     format!("Hello, {name}! You've been greeted from Rust!")
 }
 
@@ -62,16 +66,22 @@ fn greet(name: &str) -> String {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppPreferences {
     pub theme: String,
-    // Add new persistent preferences here, e.g.:
-    // pub auto_save: bool,
-    // pub language: String,
+    pub server_url: String,
+    pub user: String,
+    pub token: String,
+    pub poll_secs: u32,
+    pub notifications_total: u32,
 }
 
 impl Default for AppPreferences {
     fn default() -> Self {
         Self {
             theme: "system".to_string(),
-            // Add defaults for new preferences here
+            server_url: "http://quickbuild:8810".to_string(),
+            user: "".to_string(),
+            token: "".to_string(),
+            poll_secs: 10,
+            notifications_total: 0,
         }
     }
 }
@@ -91,25 +101,25 @@ fn get_preferences_path(app: &AppHandle) -> Result<PathBuf, String> {
 
 #[tauri::command]
 async fn load_preferences(app: AppHandle) -> Result<AppPreferences, String> {
-    log::debug!("Loading preferences from disk");
+    logger::debug!("Loading preferences from disk");
     let prefs_path = get_preferences_path(&app)?;
 
     if !prefs_path.exists() {
-        log::info!("Preferences file not found, using defaults");
+        logger::info!("Preferences file not found, using defaults");
         return Ok(AppPreferences::default());
     }
 
     let contents = std::fs::read_to_string(&prefs_path).map_err(|e| {
-        log::error!("Failed to read preferences file: {e}");
+        logger::error!("Failed to read preferences file: {e}");
         format!("Failed to read preferences file: {e}")
     })?;
 
     let preferences: AppPreferences = serde_json::from_str(&contents).map_err(|e| {
-        log::error!("Failed to parse preferences JSON: {e}");
+        logger::error!("Failed to parse preferences JSON: {e}");
         format!("Failed to parse preferences: {e}")
     })?;
 
-    log::info!("Successfully loaded preferences");
+    logger::info!("Successfully loaded preferences");
     Ok(preferences)
 }
 
@@ -118,11 +128,11 @@ async fn save_preferences(app: AppHandle, preferences: AppPreferences) -> Result
     // Validate theme value
     validate_theme(&preferences.theme)?;
 
-    log::debug!("Saving preferences to disk: {preferences:?}");
+    logger::debug!("Saving preferences to disk: {preferences:?}");
     let prefs_path = get_preferences_path(&app)?;
 
     let json_content = serde_json::to_string_pretty(&preferences).map_err(|e| {
-        log::error!("Failed to serialize preferences: {e}");
+        logger::error!("Failed to serialize preferences: {e}");
         format!("Failed to serialize preferences: {e}")
     })?;
 
@@ -130,16 +140,16 @@ async fn save_preferences(app: AppHandle, preferences: AppPreferences) -> Result
     let temp_path = prefs_path.with_extension("tmp");
 
     std::fs::write(&temp_path, json_content).map_err(|e| {
-        log::error!("Failed to write preferences file: {e}");
+        logger::error!("Failed to write preferences file: {e}");
         format!("Failed to write preferences file: {e}")
     })?;
 
     std::fs::rename(&temp_path, &prefs_path).map_err(|e| {
-        log::error!("Failed to finalize preferences file: {e}");
+        logger::error!("Failed to finalize preferences file: {e}");
         format!("Failed to finalize preferences file: {e}")
     })?;
 
-    log::info!("Successfully saved preferences to {prefs_path:?}");
+    logger::info!("Successfully saved preferences to {prefs_path:?}");
     Ok(())
 }
 
@@ -149,7 +159,7 @@ async fn send_native_notification(
     title: String,
     body: Option<String>,
 ) -> Result<(), String> {
-    log::info!("Sending native notification: {title}");
+    logger::info!("Sending native notification: {title}");
 
     #[cfg(not(mobile))]
     {
@@ -171,11 +181,11 @@ async fn send_native_notification(
 
         match notification.show() {
             Ok(_) => {
-                log::info!("Native notification sent successfully");
+                logger::info!("Native notification sent successfully");
                 Ok(())
             }
             Err(e) => {
-                log::error!("Failed to send native notification: {e}");
+                logger::error!("Failed to send native notification: {e}");
                 Err(format!("Failed to send notification: {e}"))
             }
         }
@@ -183,7 +193,7 @@ async fn send_native_notification(
 
     #[cfg(mobile)]
     {
-        log::warn!("Native notifications not supported on mobile");
+        logger::warn!("Native notifications not supported on mobile");
         Err("Native notifications not supported on mobile".to_string())
     }
 }
@@ -206,7 +216,7 @@ fn get_recovery_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 #[tauri::command]
 async fn save_emergency_data(app: AppHandle, filename: String, data: Value) -> Result<(), String> {
-    log::info!("Saving emergency data to file: {filename}");
+    logger::info!("Saving emergency data to file: {filename}");
 
     // Validate filename with proper security checks
     validate_filename(&filename)?;
@@ -222,7 +232,7 @@ async fn save_emergency_data(app: AppHandle, filename: String, data: Value) -> R
     let file_path = recovery_dir.join(format!("{filename}.json"));
 
     let json_content = serde_json::to_string_pretty(&data).map_err(|e| {
-        log::error!("Failed to serialize emergency data: {e}");
+        logger::error!("Failed to serialize emergency data: {e}");
         format!("Failed to serialize data: {e}")
     })?;
 
@@ -230,22 +240,22 @@ async fn save_emergency_data(app: AppHandle, filename: String, data: Value) -> R
     let temp_path = file_path.with_extension("tmp");
 
     std::fs::write(&temp_path, json_content).map_err(|e| {
-        log::error!("Failed to write emergency data file: {e}");
+        logger::error!("Failed to write emergency data file: {e}");
         format!("Failed to write data file: {e}")
     })?;
 
     std::fs::rename(&temp_path, &file_path).map_err(|e| {
-        log::error!("Failed to finalize emergency data file: {e}");
+        logger::error!("Failed to finalize emergency data file: {e}");
         format!("Failed to finalize data file: {e}")
     })?;
 
-    log::info!("Successfully saved emergency data to {file_path:?}");
+    logger::info!("Successfully saved emergency data to {file_path:?}");
     Ok(())
 }
 
 #[tauri::command]
 async fn load_emergency_data(app: AppHandle, filename: String) -> Result<Value, String> {
-    log::info!("Loading emergency data from file: {filename}");
+    logger::info!("Loading emergency data from file: {filename}");
 
     // Validate filename with proper security checks
     validate_filename(&filename)?;
@@ -254,27 +264,27 @@ async fn load_emergency_data(app: AppHandle, filename: String) -> Result<Value, 
     let file_path = recovery_dir.join(format!("{filename}.json"));
 
     if !file_path.exists() {
-        log::info!("Recovery file not found: {file_path:?}");
+        logger::info!("Recovery file not found: {file_path:?}");
         return Err("File not found".to_string());
     }
 
     let contents = std::fs::read_to_string(&file_path).map_err(|e| {
-        log::error!("Failed to read recovery file: {e}");
+        logger::error!("Failed to read recovery file: {e}");
         format!("Failed to read file: {e}")
     })?;
 
     let data: Value = serde_json::from_str(&contents).map_err(|e| {
-        log::error!("Failed to parse recovery JSON: {e}");
+        logger::error!("Failed to parse recovery JSON: {e}");
         format!("Failed to parse data: {e}")
     })?;
 
-    log::info!("Successfully loaded emergency data");
+    logger::info!("Successfully loaded emergency data");
     Ok(data)
 }
 
 #[tauri::command]
 async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
-    log::info!("Cleaning up old recovery files");
+    logger::info!("Cleaning up old recovery files");
 
     let recovery_dir = get_recovery_dir(&app)?;
     let mut removed_count = 0;
@@ -288,7 +298,7 @@ async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
 
     // Read directory and check each file
     let entries = std::fs::read_dir(&recovery_dir).map_err(|e| {
-        log::error!("Failed to read recovery directory: {e}");
+        logger::error!("Failed to read recovery directory: {e}");
         format!("Failed to read directory: {e}")
     })?;
 
@@ -296,7 +306,7 @@ async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
         let entry = match entry {
             Ok(e) => e,
             Err(e) => {
-                log::warn!("Failed to read directory entry: {e}");
+                logger::warn!("Failed to read directory entry: {e}");
                 continue;
             }
         };
@@ -312,7 +322,7 @@ async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
         let metadata = match std::fs::metadata(&path) {
             Ok(m) => m,
             Err(e) => {
-                log::warn!("Failed to get file metadata: {e}");
+                logger::warn!("Failed to get file metadata: {e}");
                 continue;
             }
         };
@@ -320,7 +330,7 @@ async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
         let modified = match metadata.modified() {
             Ok(m) => m,
             Err(e) => {
-                log::warn!("Failed to get file modification time: {e}");
+                logger::warn!("Failed to get file modification time: {e}");
                 continue;
             }
         };
@@ -328,7 +338,7 @@ async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
         let modified_secs = match modified.duration_since(UNIX_EPOCH) {
             Ok(d) => d.as_secs(),
             Err(e) => {
-                log::warn!("Failed to convert modification time: {e}");
+                logger::warn!("Failed to convert modification time: {e}");
                 continue;
             }
         };
@@ -337,23 +347,23 @@ async fn cleanup_old_recovery_files(app: AppHandle) -> Result<u32, String> {
         if modified_secs < seven_days_ago {
             match std::fs::remove_file(&path) {
                 Ok(_) => {
-                    log::info!("Removed old recovery file: {path:?}");
+                    logger::info!("Removed old recovery file: {path:?}");
                     removed_count += 1;
                 }
                 Err(e) => {
-                    log::warn!("Failed to remove old recovery file: {e}");
+                    logger::warn!("Failed to remove old recovery file: {e}");
                 }
             }
         }
     }
 
-    log::info!("Cleanup complete. Removed {removed_count} old recovery files");
+    logger::info!("Cleanup complete. Removed {removed_count} old recovery files");
     Ok(removed_count)
 }
 
 // Create the native menu system
 fn create_app_menu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    log::info!("Setting up native menu system");
+    logger::info!("Setting up native menu system");
 
     // Build the main application submenu
     let app_submenu = SubmenuBuilder::new(app, "Tauri Template")
@@ -397,7 +407,7 @@ fn create_app_menu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error
     // Set the menu for the app
     app.set_menu(menu)?;
 
-    log::info!("Native menu system initialized successfully");
+    logger::info!("Native menu system initialized successfully");
     Ok(())
 }
 
@@ -407,111 +417,125 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notifications::init())
-        .plugin(
-            tauri_plugin_log::Builder::new()
-                // Use Debug level in development, Info in production
-                .level(if cfg!(debug_assertions) {
-                    log::LevelFilter::Debug
-                } else {
-                    log::LevelFilter::Info
-                })
-                .targets([
-                    // Always log to stdout for development
-                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
-                    // Log to webview console for development
-                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
-                    // Log to system logs on macOS (appears in Console.app)
-                    #[cfg(target_os = "macos")]
-                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
-                        file_name: None,
-                    }),
-                ])
-                .build(),
-        )
+        // .plugin(
+        //     tauri_plugin_log::Builder::new()
+        //         // Use Debug level in development, Info in production
+        //         .level(if cfg!(debug_assertions) {
+        //             log::LevelFilter::Debug
+        //         } else {
+        //             log::LevelFilter::Info
+        //         })
+        //         .targets([
+        //             // Always log to stdout for development
+        //             tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+        //             // Log to webview console for development
+        //             tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
+        //             // Log to system logs on macOS (appears in Console.app)
+        //             #[cfg(target_os = "macos")]
+        //             tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+        //                 file_name: None,
+        //             }),
+        //         ])
+        //         .build(),
+        // )
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_notifications::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
-            log::info!("🚀 Application starting up");
-            log::debug!(
+        .setup(move |app| {
+            logger::info!("🚀 Application starting up");
+            logger::debug!(
                 "App handle initialized for package: {}",
                 app.package_info().name
             );
 
             // Set up native menu system
             if let Err(e) = create_app_menu(app) {
-                log::error!("Failed to create app menu: {e}");
+                logger::error!("Failed to create app menu: {e}");
                 return Err(e);
             }
 
             // Set up menu event handlers
             app.on_menu_event(move |app, event| {
-                log::debug!("Menu event received: {:?}", event.id());
+                logger::debug!("Menu event received: {:?}", event.id());
 
                 match event.id().as_ref() {
                     "about" => {
-                        log::info!("About menu item clicked");
+                        logger::info!("About menu item clicked");
                         // Emit event to React for handling
                         match app.emit("menu-about", ()) {
-                            Ok(_) => log::debug!("Successfully emitted menu-about event"),
-                            Err(e) => log::error!("Failed to emit menu-about event: {e}"),
+                            Ok(_) => logger::debug!("Successfully emitted menu-about event"),
+                            Err(e) => logger::error!("Failed to emit menu-about event: {e}"),
                         }
                     }
                     "check-updates" => {
-                        log::info!("Check for Updates menu item clicked");
+                        logger::info!("Check for Updates menu item clicked");
                         // Emit event to React for handling
                         match app.emit("menu-check-updates", ()) {
-                            Ok(_) => log::debug!("Successfully emitted menu-check-updates event"),
-                            Err(e) => log::error!("Failed to emit menu-check-updates event: {e}"),
+                            Ok(_) => {
+                                logger::debug!("Successfully emitted menu-check-updates event")
+                            }
+                            Err(e) => {
+                                logger::error!("Failed to emit menu-check-updates event: {e}")
+                            }
                         }
                     }
                     "preferences" => {
-                        log::info!("Preferences menu item clicked");
+                        logger::info!("Preferences menu item clicked");
                         // Emit event to React for handling
                         match app.emit("menu-preferences", ()) {
-                            Ok(_) => log::debug!("Successfully emitted menu-preferences event"),
-                            Err(e) => log::error!("Failed to emit menu-preferences event: {e}"),
+                            Ok(_) => logger::debug!("Successfully emitted menu-preferences event"),
+                            Err(e) => logger::error!("Failed to emit menu-preferences event: {e}"),
                         }
                     }
                     "toggle-left-sidebar" => {
-                        log::info!("Toggle Left Sidebar menu item clicked");
+                        logger::info!("Toggle Left Sidebar menu item clicked");
                         // Emit event to React for handling
                         match app.emit("menu-toggle-left-sidebar", ()) {
                             Ok(_) => {
-                                log::debug!("Successfully emitted menu-toggle-left-sidebar event")
+                                logger::debug!(
+                                    "Successfully emitted menu-toggle-left-sidebar event"
+                                )
                             }
                             Err(e) => {
-                                log::error!("Failed to emit menu-toggle-left-sidebar event: {e}")
+                                logger::error!("Failed to emit menu-toggle-left-sidebar event: {e}")
                             }
                         }
                     }
                     "toggle-right-sidebar" => {
-                        log::info!("Toggle Right Sidebar menu item clicked");
+                        logger::info!("Toggle Right Sidebar menu item clicked");
                         // Emit event to React for handling
                         match app.emit("menu-toggle-right-sidebar", ()) {
                             Ok(_) => {
-                                log::debug!("Successfully emitted menu-toggle-right-sidebar event")
+                                logger::debug!(
+                                    "Successfully emitted menu-toggle-right-sidebar event"
+                                )
                             }
                             Err(e) => {
-                                log::error!("Failed to emit menu-toggle-right-sidebar event: {e}")
+                                logger::error!(
+                                    "Failed to emit menu-toggle-right-sidebar event: {e}"
+                                )
                             }
                         }
                     }
                     _ => {
-                        log::debug!("Unhandled menu event: {:?}", event.id());
+                        logger::debug!("Unhandled menu event: {:?}", event.id());
                     }
                 }
             });
 
             // Example of different log levels
-            log::trace!("This is a trace message (most verbose)");
-            log::debug!("This is a debug message (development only)");
-            log::info!("This is an info message (production)");
-            log::warn!("This is a warning message");
-            // log::error!("This is an error message");
+            logger::trace!("This is a trace message (most verbose)");
+            logger::debug!("This is a debug message (development only)");
+            logger::info!("This is an info message (production)");
+            logger::warn!("This is a warning message");
+            // logger::error!("This is an error message");
+
+            let app = app.handle().clone();
+
+            tray::create_tray(&app).unwrap();
 
             Ok(())
         })

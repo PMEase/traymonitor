@@ -96,6 +96,11 @@ export function useMainWindowEventListeners() {
             useUIStore.getState();
           setRightSidebarVisible(!rightSidebarVisible);
         }),
+
+        listen("menu-show-configurations", () => {
+          logger.debug("Show configurations event received");
+          window.location.href = "https://google.com";
+        }),
       ]);
 
       logger.debug(
