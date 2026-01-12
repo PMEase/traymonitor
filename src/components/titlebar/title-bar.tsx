@@ -1,14 +1,9 @@
 import {
-  PanelLeft,
-  PanelLeftClose,
-  PanelRight,
-  PanelRightClose,
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { executeCommand, useCommandContext } from "@/lib/commands";
 import { cn } from "@/lib/utils";
-import { useUIStore } from "@/store/ui-store";
 import { MacOSWindowControls } from "./macos-window-controls";
 
 interface TitleBarProps {
@@ -16,13 +11,7 @@ interface TitleBarProps {
   title?: string;
 }
 
-export function TitleBar({ className, title = "Tauri App" }: TitleBarProps) {
-  const {
-    leftSidebarVisible,
-    rightSidebarVisible,
-    toggleLeftSidebar,
-    toggleRightSidebar,
-  } = useUIStore();
+export function TitleBar({ className, title = "Tray Monitor" }: TitleBarProps) {
   const commandContext = useCommandContext();
   return (
     <div
@@ -37,23 +26,6 @@ export function TitleBar({ className, title = "Tauri App" }: TitleBarProps) {
         <MacOSWindowControls />
 
         {/* Left Action Buttons */}
-        <div className="flex items-center gap-1">
-          <Button
-            className="h-6 w-6 text-foreground/70 hover:text-foreground"
-            onClick={toggleLeftSidebar}
-            size="icon"
-            title={
-              leftSidebarVisible ? "Hide Left Sidebar" : "Show Left Sidebar"
-            }
-            variant="ghost"
-          >
-            {leftSidebarVisible ? (
-              <PanelLeftClose className="h-3 w-3" />
-            ) : (
-              <PanelLeft className="h-3 w-3" />
-            )}
-          </Button>
-        </div>
       </div>
 
       {/* Center - Title */}
@@ -71,22 +43,6 @@ export function TitleBar({ className, title = "Tauri App" }: TitleBarProps) {
           variant="ghost"
         >
           <Settings className="h-3 w-3" />
-        </Button>
-
-        <Button
-          className="h-6 w-6 text-foreground/70 hover:text-foreground"
-          onClick={toggleRightSidebar}
-          size="icon"
-          title={
-            rightSidebarVisible ? "Hide Right Sidebar" : "Show Right Sidebar"
-          }
-          variant="ghost"
-        >
-          {rightSidebarVisible ? (
-            <PanelRightClose className="h-3 w-3" />
-          ) : (
-            <PanelRight className="h-3 w-3" />
-          )}
         </Button>
       </div>
     </div>

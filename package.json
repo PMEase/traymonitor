@@ -6,6 +6,9 @@
   "author": "PMEase Inc.",
   "copyright": "Copyright © 2025 PMEase. All rights reserved.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

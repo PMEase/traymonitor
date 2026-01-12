@@ -1,9 +1,11 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { usePreferences, useSavePreferences } from "@/services/preferences";
+import { logger } from "@/lib/logger";
 
 const SettingsField: React.FC<{
   label: string;
@@ -33,39 +35,90 @@ const SettingsSection: React.FC<{
 );
 
 export const GeneralPane: React.FC = () => {
-  // Example local state - these are NOT persisted to disk
-  // To add persistent preferences:
-  // 1. Add the field to AppPreferences in both Rust and TypeScript
-  // 2. Use usePreferencesManager() and updatePreferences()
-  const [exampleText, setExampleText] = useState("Example value");
-  const [exampleToggle, setExampleToggle] = useState(true);
+  const { data: preferences, isLoading } = usePreferences();
+  const savePreferences = useSavePreferences();
+
+  // Local state for form fields
+  const [serverUrl, setServerUrl] = useState("");
+  const [enableNotifications, setEnableNotifications] = useState(true);
+
+  // Update local state when preferences load
+  useEffect(() => {
+    if (preferences) {
+      setServerUrl(preferences.server_url || "");
+      setEnableNotifications(preferences.enable_notifications ?? true);
+    }
+  }, [preferences]);
+
+  // Handle saving preferences
+  const handleSave = async () => {
+    if (!preferences) return;
+
+    try {
+      await savePreferences.mutateAsync({
+        ...preferences,
+        server_url: serverUrl.trim(),
+        enable_notifications: enableNotifications,
+      });
+      logger.info("Preferences saved successfully");
+    } catch (error) {
+      logger.error("Failed to save preferences", { error });
+    }
+  };
+
+  // Auto-save on blur for server URL
+  const handleServerUrlBlur = () => {
+    if (preferences && serverUrl.trim() !== (preferences.server_url || "")) {
+      handleSave();
+    }
+  };
+
+  // Auto-save on toggle change
+  const handleNotificationToggle = (checked: boolean) => {
+    setEnableNotifications(checked);
+    if (preferences) {
+      savePreferences.mutate({
+        ...preferences,
+        enable_notifications: checked,
+      });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-sm text-muted-foreground">Loading preferences...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <SettingsSection title="Example Settings">
+      <SettingsSection title="Server Configuration">
         <SettingsField
-          description="This is an example text input setting (not persisted)"
-          label="Example Text Setting"
+          description="The base URL of your QuickBuild server. The dashboard will be displayed at {server_url}/lite"
+          label="Server URL"
         >
           <Input
-            onChange={(e) => setExampleText(e.target.value)}
-            placeholder="Enter example text"
-            value={exampleText}
+            onChange={(e) => setServerUrl(e.target.value)}
+            onBlur={handleServerUrlBlur}
+            placeholder="http://quickbuild:8810"
+            value={serverUrl}
+            disabled={savePreferences.isPending}
           />
         </SettingsField>
+      </SettingsSection>
 
+      <SettingsSection title="Notifications">
         <SettingsField
-          description="This is an example switch/toggle setting (not persisted)"
-          label="Example Toggle Setting"
+          description="Enable or disable system notifications"
+          label="Enable Notifications"
         >
           <div className="flex items-center space-x-2">
             <Switch
-              checked={exampleToggle}
-              id="example-toggle"
-              onCheckedChange={setExampleToggle}
+              checked={enableNotifications}
+              id="enable-notifications"
+              onCheckedChange={handleNotificationToggle}
+              disabled={savePreferences.isPending}
             />
-            <Label className="text-sm" htmlFor="example-toggle">
-              {exampleToggle ? "Enabled" : "Disabled"}
+            <Label className="text-sm" htmlFor="enable-notifications">
+              {enableNotifications ? "Enabled" : "Disabled"}
             </Label>
           </div>
         </SettingsField>

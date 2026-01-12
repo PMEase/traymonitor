@@ -2,63 +2,24 @@ import { Toaster } from "sonner";
 import { CommandPalette } from "@/components/command-palette/command-palette";
 import { PreferencesDialog } from "@/components/preferences/preferences-dialog";
 import { TitleBar } from "@/components/titlebar/title-bar";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
 import { useMainWindowEventListeners } from "@/hooks/use-main-window-event-listeners";
 import { useTheme } from "@/hooks/use-theme";
-import { cn } from "@/lib/utils";
-import { useUIStore } from "@/store/ui-store";
-import { LeftSideBar } from "./left-sidebar";
 import { MainWindowContent } from "./main-window-content";
-import { RightSideBar } from "./right-sidebar";
 
 export function MainWindow() {
   const { theme } = useTheme();
-  const { leftSidebarVisible, rightSidebarVisible } = useUIStore();
 
   // Set up global event listeners (keyboard shortcuts, etc.)
   useMainWindowEventListeners();
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden rounded-xl bg-background">
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
       {/* Title Bar */}
       <TitleBar />
 
       {/* Main Content Area with Resizable Panels */}
-      <div className="flex flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
-          {/* Left Sidebar */}
-          <ResizablePanel
-            className={cn(!leftSidebarVisible && "hidden")}
-            defaultSize={20}
-            maxSize={40}
-            minSize={15}
-          >
-            <LeftSideBar />
-          </ResizablePanel>
-
-          <ResizableHandle className={cn(!leftSidebarVisible && "hidden")} />
-
-          {/* Main Content */}
-          <ResizablePanel defaultSize={60} minSize={30}>
-            <MainWindowContent />
-          </ResizablePanel>
-
-          <ResizableHandle className={cn(!rightSidebarVisible && "hidden")} />
-
-          {/* Right Sidebar */}
-          <ResizablePanel
-            className={cn(!rightSidebarVisible && "hidden")}
-            defaultSize={20}
-            maxSize={40}
-            minSize={15}
-          >
-            <RightSideBar />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+      <div className="flex-1 overflow-hidden">
+        <MainWindowContent />
       </div>
 
       {/* Global UI Components (hidden until triggered) */}

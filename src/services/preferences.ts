@@ -17,13 +17,21 @@ export function usePreferences() {
     queryFn: async (): Promise<AppPreferences> => {
       try {
         logger.debug("Loading preferences from backend");
-        const preferences = await invoke<AppPreferences>("load_preferences");
+        const preferences = await invoke<AppPreferences>("load_settings");
         logger.info("Preferences loaded successfully", { preferences });
         return preferences;
       } catch (error) {
         // Return defaults if preferences file doesn't exist yet
         logger.warn("Failed to load preferences, using defaults", { error });
-        return { theme: "system" };
+        return {
+          theme: "system",
+          enable_notifications: true,
+          notifications_total: 100,
+          server_url: "http://quickbuild:8810",
+          user: "user",
+          token: "token",
+          poll_interval_in_secs: 10,
+        };
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -38,11 +46,11 @@ export function useSavePreferences() {
     mutationFn: async (preferences: AppPreferences) => {
       try {
         logger.debug("Saving preferences to backend", { preferences });
-        await invoke("save_preferences", { preferences });
+        await invoke("save_settings", { settings: preferences });
         logger.info("Preferences saved successfully");
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error occurred";
+          error instanceof Error ? error.message : error as string;
         logger.error("Failed to save preferences", { error, preferences });
         toast.error("Failed to save preferences", { description: message });
         throw error;

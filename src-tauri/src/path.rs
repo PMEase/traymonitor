@@ -1,27 +1,30 @@
 use std::io;
 use std::path::PathBuf;
 
-/// App identifier (identical to `tauri.conf.json`)
-/// used for various directories and configurations
-pub const APP_ID: &str = "com.pmease.quickbuild.traymonitor";
+use crate::constants::APP_ID;
 
-pub fn config_dir() -> io::Result<PathBuf> {
+fn config_dir() -> io::Result<PathBuf> {
     let path = platform_config_dir();
-    std::fs::create_dir_all(&path)?;
+    if !path.exists() {
+        std::fs::create_dir_all(&path)?;
+    }
     Ok(path)
 }
 
 pub fn logs_dir() -> io::Result<PathBuf> {
     let path = platform_logs_dir();
-    std::fs::create_dir_all(&path)?;
+    if !path.exists() {
+        std::fs::create_dir_all(&path)?;
+    }
     Ok(path)
 }
 
-pub fn log_file_path() -> PathBuf {
-    platform_logs_dir().join(format!("{}.log", APP_ID))
-}
+// pub fn log_file_path() -> PathBuf {
+//     platform_logs_dir().join(format!("{}.log", APP_NAME))
+// }
 
 #[tauri::command]
+#[specta::specta]
 pub fn get_config_dir() -> Result<String, String> {
     config_dir()
         .map(|path| path.to_string_lossy().to_string())
@@ -29,6 +32,7 @@ pub fn get_config_dir() -> Result<String, String> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn get_logs_dir() -> Result<String, String> {
     logs_dir()
         .map(|path| path.to_string_lossy().to_string())
@@ -39,13 +43,13 @@ pub fn get_logs_dir() -> Result<String, String> {
 // see: https://github.com/tauri-apps/tauri/blob/dev/crates/tauri/src/path/desktop.rs
 fn platform_config_dir() -> PathBuf {
     if cfg!(feature = "portable") {
-        return std::env::current_dir()
-            .unwrap_or_else(|_| std::env::temp_dir())
-            .join("tray-monitor-data");
+        return std::env::current_dir().unwrap_or_else(|_| std::env::temp_dir().join(APP_ID));
     }
 
     #[cfg(target_os = "macos")]
     {
+        use crate::constants::APP_ID;
+
         dirs::home_dir()
             .map(|dir| dir.join("Library/Application Support").join(APP_ID))
             .unwrap_or_else(|| std::env::temp_dir().join(APP_ID))

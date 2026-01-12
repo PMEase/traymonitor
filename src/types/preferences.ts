@@ -1,13 +1,15 @@
-// Types that match the Rust AppPreferences struct
-// Only contains settings that should be persisted to disk
-export interface AppPreferences {
-  theme: string;
-  // Add new persistent preferences here, e.g.:
-  // auto_save: boolean
-  // language: string
-}
+// Re-export the auto-generated AppPreference type from bindings
+import type { AppSettings } from "@/lib/bindings";
+
+// Use the auto-generated type for consistency with Rust backend
+export type AppPreferences = AppSettings;
 
 export const defaultPreferences: AppPreferences = {
   theme: "system",
-  // Add defaults for new preferences here
+  enable_notifications: true,
+  notifications_total: 100,
+  server_url: "http://quickbuild:8810",
+  user: "user",
+  token: "token",
+  poll_interval_in_secs: 10,
 };

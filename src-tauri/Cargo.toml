@@ -1,9 +1,9 @@
 [package]
-name = "tauri-app"
+name = "tray-monitor"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+description = "Tray monitor for QuickBuild"
+authors = ["PMEase"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,7 +11,7 @@ edition = "2021"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "tauri_app_lib"
+name = "tray_monitor_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -19,42 +19,75 @@ tauri-build = { version = "2.5.2", features = [] }
 
 [dependencies]
 tauri = { version = "=2.9.3", features = [
+  "protocol-asset",
   "macos-private-api",
   "tray-icon",
   "image-png",
   "devtools",
+  "unstable",
 ] }
 open = "=3.2.0"
 anyhow = "=1.0.100"
-once_cell = "=1.21.3"
 regex = "=1.12.2"
 rustc-hash = "=2.1.1"
 dirs = "=6.0.0"
-serde = { version = "=1.0.228", default-features = false, features = ["derive"] }
+serde = { version = "=1.0.228", default-features = false, features = [
+  "derive",
+] }
 serde_json = { version = "=1.0.145", default-features = false, features = [
   "raw_value",
   "std",
 ] }
 strum = { version = "=0.27.1", features = ["derive"] }
 strum_macros = "=0.27.1"
+tauri-plugin-autostart = "=2.5.1"
+tauri-plugin-fs = "=2.4.4"
+tauri-plugin-notifications = "=0.2.6"
+tauri-plugin-persisted-scope = "=2.3.4"
+tauri-plugin-positioner = { version = "2.3.1", features = ["tray-icon"] }
+tauri-plugin-process = "=2.3.1"
+tauri-plugin-store = "=2.4.1"
+# devtools = "=0.3.4"
+
 tauri-plugin-clipboard-manager = "=2.3.2"
 tauri-plugin-dialog = "=2.4.2"
-tauri-plugin-fs = "=2.4.4"
 tauri-plugin-log = "=2.7.1"
-tauri-plugin-notifications = "=0.2.6"
 tauri-plugin-opener = "=2.5.2"
-tauri-plugin-persisted-scope = "=2.3.4"
-tauri-plugin-process = "=2.3.1"
 time = { version = "=0.3.41", features = ["serde", "serde-well-known", "std"] }
-tokio = { version = "=1.48.0", features = ["rt-multi-thread", "macros", "time", "sync"] }
+tokio = { version = "=1.48.0", features = [
+  "rt-multi-thread",
+  "macros",
+  "time",
+  "sync",
+] }
 tracing = "=0.1.41"
 tracing-appender = "=0.2.3"
 tracing-attributes = "=0.1.29"
 tracing-subscriber = { version = "=0.3.20", features = ["env-filter", "json"] }
 
+# Type-safe Tauri command bindings
+specta = { version = "=2.0.0-rc.22", features = ["derive", "serde_json"] }
+tauri-specta = { version = "=2.0.0-rc.21", features = ["typescript"] }
+specta-typescript = "=0.0.9"
+
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "=2.3.6"
 tauri-plugin-updater = "2"
 tauri-plugin-window-state = "=2.4.1"
+
+# macOS-only: NSPanel for native panel behavior (fullscreen overlay, click-outside dismiss)
+[target.'cfg(target_os = "macos")'.dependencies]
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
+rand = "0.8"
+cocoa = "0.25"
+objc = "0.2.7"
+objc-foundation = "0.1.1"
+objc_id = "0.1.1"
+block = "0.1.6"
+objc2 = "0.6"
+objc2-authentication-services = "0.3"
+objc2-foundation = { version = "0.3", features = ["NSError", "NSArray"] }
+
 
 # Optimize for smaller binary size in release builds
 [profile.release]

@@ -16,11 +16,9 @@
     "core:window:allow-start-dragging",
     "core:tray:default",
     "core:tray:allow-get-by-id",
-    "opener:default",
-    "clipboard-manager:default",
-    "dialog:default",
-    "log:default",
+    "store:default",
     "notifications:default",
+    "positioner:default",
     "process:default"
   ]
 }

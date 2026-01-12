@@ -1,11 +1,10 @@
 use std::path::PathBuf;
 
-pub use tracing::{debug, error, event as log, info, trace, warn};
-pub use tracing_attributes::instrument;
-
+use crate::constants;
+use crate::utils::platform::is_windows;
 use tracing_appender::rolling::Rotation;
 use tracing_appender::{non_blocking::WorkerGuard, rolling::RollingFileAppender};
-use tracing_subscriber::{fmt, prelude::*, util::SubscriberInitExt, EnvFilter, Layer};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*, util::SubscriberInitExt};
 
 /// Contains guards necessary for logging and metrics collection.
 #[derive(Debug)]
@@ -18,57 +17,47 @@ pub struct LogGuard {
 /// current cargo workspace are automatically considered for verbose logging.
 #[allow(clippy::print_stdout)] // The logger hasn't been initialized yet
 pub fn setup(log_dir: &PathBuf) -> anyhow::Result<LogGuard> {
+    std::fs::create_dir_all(log_dir)?;
     let mut guards = Vec::new();
 
-    // TODO: Setup OpenTelemetry traces and metrics
+    #[cfg(debug_assertions)]
+    let level_filter = get_envfilter("debug", tracing::Level::DEBUG);
+    #[cfg(not(debug_assertions))]
+    let level_filter = get_envfilter("info", tracing::Level::INFO);
 
-    // Setup file logging
-    let file_layer = {
-        // let mut path = crate::env::workspace_path();
-        // path.push(&config.file.path);
+    let file_appender = RollingFileAppender::builder()
+        .rotation(Rotation::DAILY)
+        .filename_prefix(constants::APP_NAME)
+        .filename_suffix("log")
+        .max_log_files(7)
+        .build(log_dir)?;
 
-        let file_appender = RollingFileAppender::builder()
-            .rotation(Rotation::DAILY)
-            .filename_prefix("traymonitor")
-            .filename_suffix("log")
-            .max_log_files(7)
-            .build(log_dir)?;
-
-        let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
-        guards.push(guard);
-
-        let file_filter = get_envfilter("info", tracing::Level::WARN);
-        println!("Using file logging filter: {file_filter}");
-        let file_layer = fmt::layer()
-            .with_timer(fmt::time::time())
-            .compact()
-            .with_ansi(false)
-            .with_writer(file_writer)
-            .with_filter(file_filter);
-
-        Some(file_layer)
-    };
-
-    let subscriber = tracing_subscriber::registry().with(file_layer);
-
-    // Setup console logging
-    let (console_writer, guard) = tracing_appender::non_blocking(std::io::stdout());
+    let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
     guards.push(guard);
 
-    let console_filter = get_envfilter("debug", tracing::Level::INFO);
-    println!("Using console logging filter: {console_filter}");
     let console_layer = fmt::layer()
-        .with_timer(fmt::time::time())
-        .pretty()
-        .with_ansi(!cfg!(target_os = "windows"))
+        .with_writer(std::io::stdout)
         .with_thread_ids(true)
         .with_thread_names(true)
-        .with_writer(console_writer)
-        .with_filter(console_filter);
-    subscriber.with(console_layer).init();
+        .with_ansi(!is_windows());
 
-    // Returning the LogGuard for logs to be printed and metrics to be collected until it is
-    // dropped
+    let file_layer = fmt::layer()
+        .with_writer(non_blocking)
+        .with_ansi(false)
+        .with_thread_ids(true)
+        .with_thread_names(true);
+
+    tracing_subscriber::registry()
+        .with(level_filter)
+        .with(file_layer)
+        .with(console_layer)
+        .init();
+
+    tracing::info!(
+        log_dir = %log_dir.display(),
+        "Logging initialized with rotating file in directory"
+    );
+
     Ok(LogGuard { _guards: guards })
 }
 
