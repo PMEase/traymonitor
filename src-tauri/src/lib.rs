@@ -78,36 +78,49 @@ pub async fn run() {
 
             specta_builder.mount_events(&app);
 
-            WebviewWindowBuilder::new(&app, "dashboard", WebviewUrl::default())
-                .title("Dashboard")
-                .inner_size(1200.0, 800.0)
-                .resizable(true)
-                .decorations(true)
-                .always_on_top(false)
-                .build()
-                .unwrap();
+            // WebviewWindowBuilder::new(&app, "dashboard", WebviewUrl::default())
+            //     .title("Dashboard")
+            //     .inner_size(1200.0, 800.0)
+            //     .resizable(true)
+            //     .decorations(true)
+            //     .always_on_top(false)
+            //     .build()
+            //     .unwrap();
 
-            if let Some(dashboard) = app.get_webview_window("dashboard") {
-                let server_url = settings::server_url(&app);
-                let url: Url = format!("{server_url}/lite")
-                    .parse()
-                    .map_err(|e| format!("Failed to parse URL: {e}"))?;
-                tracing::info!("Navigating to URL: {}", url);
-                let _ = dashboard.hide();
-                let _ = dashboard.set_title("QuickBuild Dashboard");
-                let _ = dashboard
-                    // .eval(format!("window.location.href = '{}';", url))
-                    .navigate(url)
-                    .map_err(|e| format!("Failed to navigate to URL: {e}"));
-                let _ = dashboard.show();
-            }
+            // if let Some(dashboard) = app.get_webview_window("dashboard") {
+            //     let server_url = settings::server_url(&app);
+            //     let url: Url = format!("{server_url}/lite")
+            //         .parse()
+            //         .map_err(|e| format!("Failed to parse URL: {e}"))?;
+            //     tracing::info!("Navigating to URL: {}", url);
+            //     let _ = dashboard.hide();
+            //     let _ = dashboard.set_title("QuickBuild Dashboard");
+            //     let _ = dashboard
+            //         // .eval(format!("window.location.href = '{}';", url))
+            //         .navigate(url)
+            //         .map_err(|e| format!("Failed to navigate to URL: {e}"));
+            //     let _ = dashboard.show();
+            // }
 
             tray::create_tray(&app)?;
             Ok(())
         })
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(move |_handle, _event| {});
+        .run(move |app, event| {
+            if let tauri::RunEvent::WindowEvent {
+                event: tauri::WindowEvent::CloseRequested { api, .. },
+                label,
+                ..
+            } = event
+            {
+                let win = app.get_webview_window(label.as_str()).unwrap();
+                win.hide().unwrap();
+                api.prevent_close();
+            }
+        });
+
+    tracing::info!("Application started successfully!");
 }
 
 fn setup_logging() -> Option<logger::LogGuard> {

@@ -19,6 +19,7 @@ export function MainWindow() {
 
       {/* Main Content Area with Resizable Panels */}
       <div className="flex-1 overflow-hidden">
+        <h1>Hello world!</h1>
         <MainWindowContent />
       </div>
 

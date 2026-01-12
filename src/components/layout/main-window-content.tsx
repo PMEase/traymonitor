@@ -1,10 +1,11 @@
 import { useMemo } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { usePreferences, useSavePreferences } from "@/services/preferences";
-import { Spinner } from "@/components/ui/spinner";
+import type { AppPreferences } from "@/types/preferences";
 import { Button } from "../ui/button";
-import { logger } from "@/lib/logger";
-import { AppPreferences } from "@/types/preferences";
+
 // import { Button } from "@/components/ui/button";
 // import { ExternalLink } from "lucide-react";
 // import { commands } from "@/lib/bindings";
@@ -14,6 +15,8 @@ interface MainWindowContentProps {
   children?: React.ReactNode;
   className?: string;
 }
+
+const REGEX_TRAILING_SLASH = /\/+$/;
 
 export function MainWindowContent({
   children,
@@ -32,7 +35,7 @@ export function MainWindowContent({
       return null;
     }
     // Remove trailing slash if present, then append /lite
-    const baseUrl = serverUrl.replace(/\/+$/, "");
+    const baseUrl = serverUrl.replace(REGEX_TRAILING_SLASH, "");
     return `${baseUrl}`;
   }, [preferences?.server_url]);
 
@@ -45,6 +48,29 @@ export function MainWindowContent({
     }
   };
 
+  const content = dashboardUrl ? (
+    <>
+      <h1>Hello, {preferences?.server_url}</h1>
+      <Button
+        onClick={() =>
+          handleSaveSettings({
+            ...preferences,
+            server_url: "http://build.pmease.com:8810",
+          })
+        }
+      >
+        Update Server URL
+      </Button>
+    </>
+  ) : (
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="font-medium text-sm">No dashboard URL configured</p>
+      <p className="text-muted-foreground text-xs">
+        Please configure the server URL in preferences
+      </p>
+    </div>
+  );
+
   return (
     <div className={cn("flex h-full flex-col bg-background", className)}>
       {children || (
@@ -52,25 +78,12 @@ export function MainWindowContent({
           {isLoading ? (
             <div className="flex flex-col items-center gap-2">
               <Spinner />
-              <p className="text-sm text-muted-foreground">Loading preferences...</p>
-            </div>
-          ) : dashboardUrl ? (
-            <>
-              <h1>Hello, {preferences?.server_url}</h1>
-              <Button onClick={() => handleSaveSettings({
-                ...preferences,
-                server_url: "http://build.pmease.com:8810",
-              })}>
-                Update Server URL
-              </Button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-center">
-              <p className="text-sm font-medium">No dashboard URL configured</p>
-              <p className="text-xs text-muted-foreground">
-                Please configure the server URL in preferences
+              <p className="text-muted-foreground text-sm">
+                Loading preferences...
               </p>
             </div>
+          ) : (
+            content
           )}
         </div>
       )}

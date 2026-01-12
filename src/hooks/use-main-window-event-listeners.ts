@@ -52,8 +52,9 @@ export function useMainWindowEventListeners() {
           logger.debug("About menu event received");
           // Show simple about dialog
           const appVersion = "0.1.0"; // Could be dynamic from package.json
+          // biome-ignore lint/suspicious/noAlert: would replace with a dialog
           alert(
-            `Tauri Template App\n\nVersion: ${appVersion}\n\nBuilt with Tauri v2 + React + TypeScript`
+            `QuickBuild Tray Monitor\n\nVersion: ${appVersion}\n\nBuilt with Tauri v2 + React + TypeScript`
           );
         }),
 

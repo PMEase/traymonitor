@@ -68,11 +68,11 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  private handleReload = () => {
+  private readonly handleReload = () => {
     window.location.reload();
   };
 
-  private handleReset = () => {
+  private readonly handleReset = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 

@@ -19,11 +19,10 @@ export function initializeCommandSystem(): void {
   // Future command groups will be registered here
 
   if (import.meta.env.DEV) {
-    // biome-ignore lint/suspicious/noConsole: show in console
     console.log("Command system initialized");
   }
 }
 
-export { navigationCommands } from "./navigation-commands";
-export { notificationCommands } from "./notification-commands";
-export { windowCommands } from "./window-commands";
+export type { navigationCommands } from "./navigation-commands";
+export type { notificationCommands } from "./notification-commands";
+export type { windowCommands } from "./window-commands";

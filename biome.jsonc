@@ -1,18 +1,29 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
-  "extends": ["ultracite"],
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/remix"
+  ],
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**/*.ts", "**/*.tsx", "!**/*.js", "!src/components/ui"]
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "!**/*.js",
+      "!**/lib/bindings.ts",
+      "!src/components/ui"
+    ]
   },
   "linter": {
     "rules": {
       "performance": {
-        "noNamespaceImport": "off"
+        "noNamespaceImport": "off",
+        "noBarrelFile": "off"
       }
     }
   },
@@ -48,9 +59,6 @@
       "includes": ["./**/*.stories.tsx"],
       "linter": {
         "rules": {
-          "suspicious": {
-            "noConsole": "off"
-          },
           "performance": {
             "noImgElement": "off"
           }
@@ -72,9 +80,7 @@
       },
       "linter": {
         "rules": {
-          "nursery": {
-            "noUnknownAtRule": "off"
-          }
+          "nursery": {}
         }
       }
     }

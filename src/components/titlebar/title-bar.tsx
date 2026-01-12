@@ -1,6 +1,4 @@
-import {
-  Settings,
-} from "lucide-react";
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { executeCommand, useCommandContext } from "@/lib/commands";
 import { cn } from "@/lib/utils";
@@ -29,7 +27,7 @@ export function TitleBar({ className, title = "Tray Monitor" }: TitleBarProps) {
       </div>
 
       {/* Center - Title */}
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         <span className="font-medium text-foreground/80 text-sm">{title}</span>
       </div>
 

@@ -50,7 +50,7 @@ export function useSavePreferences() {
         logger.info("Preferences saved successfully");
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : error as string;
+          error instanceof Error ? error.message : (error as string);
         logger.error("Failed to save preferences", { error, preferences });
         toast.error("Failed to save preferences", { description: message });
         throw error;

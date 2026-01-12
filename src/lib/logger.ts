@@ -15,7 +15,7 @@ interface LogEntry {
 }
 
 class Logger {
-  private isDevelopment = import.meta.env.DEV;
+  private readonly isDevelopment = import.meta.env.DEV;
 
   /**
    * Log a trace message (most verbose)
@@ -89,19 +89,15 @@ class Logger {
     switch (entry.level) {
       case "trace":
       case "debug":
-        // biome-ignore lint/suspicious/noConsole: use log
         console.debug(...args);
         break;
       case "info":
-        // biome-ignore lint/suspicious/noConsole: use log
         console.info(...args);
         break;
       case "warn":
-        // biome-ignore lint/suspicious/noConsole: use log
         console.warn(...args);
         break;
       case "error":
-        // biome-ignore lint/suspicious/noConsole: use log
         console.error(...args);
         break;
       default:

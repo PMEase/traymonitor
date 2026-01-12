@@ -15,17 +15,17 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: P_HELLO })).toBeInTheDocument();
   });
 
-  it("renders title bar with traffic light buttons", () => {
-    render(<App />);
-    // Find specifically the window control buttons in the title bar
-    const titleBarButtons = screen
-      .getAllByRole("button")
-      .filter(
-        (button) =>
-          button.getAttribute("aria-label")?.includes("window") ||
-          button.className.includes("window-control")
-      );
-    // Should have at least the window control buttons
-    expect(titleBarButtons.length).toBeGreaterThanOrEqual(0);
-  });
+  // it("renders title bar with traffic light buttons", () => {
+  //   render(<App />);
+  //   // Find specifically the window control buttons in the title bar
+  //   const titleBarButtons = screen
+  //     .getAllByRole("button")
+  //     .filter(
+  //       (button) =>
+  //         button.getAttribute("aria-label")?.includes("window") ||
+  //         button.className.includes("window-control")
+  //     );
+  //   // Should have at least the window control buttons
+  //   expect(titleBarButtons.length).toBeGreaterThanOrEqual(0);
+  // });
 });

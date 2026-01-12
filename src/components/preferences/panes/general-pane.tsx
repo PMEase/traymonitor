@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { usePreferences, useSavePreferences } from "@/services/preferences";
 import { logger } from "@/lib/logger";
+import { usePreferences, useSavePreferences } from "@/services/preferences";
 
 const SettingsField: React.FC<{
   label: string;
@@ -52,7 +52,9 @@ export const GeneralPane: React.FC = () => {
 
   // Handle saving preferences
   const handleSave = async () => {
-    if (!preferences) return;
+    if (!preferences) {
+      return;
+    }
 
     try {
       await savePreferences.mutateAsync({
@@ -85,7 +87,11 @@ export const GeneralPane: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading preferences...</div>;
+    return (
+      <div className="text-muted-foreground text-sm">
+        Loading preferences...
+      </div>
+    );
   }
 
   return (
@@ -96,11 +102,11 @@ export const GeneralPane: React.FC = () => {
           label="Server URL"
         >
           <Input
-            onChange={(e) => setServerUrl(e.target.value)}
+            disabled={savePreferences.isPending}
             onBlur={handleServerUrlBlur}
+            onChange={(e) => setServerUrl(e.target.value)}
             placeholder="http://quickbuild:8810"
             value={serverUrl}
-            disabled={savePreferences.isPending}
           />
         </SettingsField>
       </SettingsSection>
@@ -113,9 +119,9 @@ export const GeneralPane: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Switch
               checked={enableNotifications}
+              disabled={savePreferences.isPending}
               id="enable-notifications"
               onCheckedChange={handleNotificationToggle}
-              disabled={savePreferences.isPending}
             />
             <Label className="text-sm" htmlFor="enable-notifications">
               {enableNotifications ? "Enabled" : "Disabled"}

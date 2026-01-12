@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -119,7 +119,7 @@
 
   body {
     @apply text-foreground;
-    font-family: -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: -apple-system, "Segoe UI", "Roboto", sans-serif;
     font-size: 16px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -142,7 +142,7 @@
   /* Allow text selection in specific areas */
   input,
   textarea,
-  [contenteditable='true'] {
+  [contenteditable="true"] {
     user-select: text !important;
     -webkit-user-select: text !important;
     -moz-user-select: text !important;
