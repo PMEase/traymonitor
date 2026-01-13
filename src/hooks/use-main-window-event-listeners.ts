@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { check } from "@tauri-apps/plugin-updater";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { logger } from "@/lib/logger";
 import { useUIStore } from "@/store/ui-store";
 import { useCommandContext } from "./use-command-context";
@@ -13,6 +14,7 @@ import { useCommandContext } from "./use-command-context";
  */
 export function useMainWindowEventListeners() {
   const commandContext = useCommandContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,14 +50,19 @@ export function useMainWindowEventListeners() {
     const setupMenuListeners = async () => {
       logger.debug("Setting up menu event listeners");
       const unlisteners = await Promise.all([
-        listen("menu-about", () => {
-          logger.debug("About menu event received");
-          // Show simple about dialog
-          const appVersion = "0.1.0"; // Could be dynamic from package.json
-          // biome-ignore lint/suspicious/noAlert: would replace with a dialog
-          alert(
-            `QuickBuild Tray Monitor\n\nVersion: ${appVersion}\n\nBuilt with Tauri v2 + React + TypeScript`
-          );
+        listen("menu-view-builds", () => {
+          logger.info("View builds menu event received");
+          navigate("/builds");
+        }),
+
+        listen("menu-view-alerts", () => {
+          logger.info("View alerts menu event received");
+          navigate("/alerts");
+        }),
+
+        listen("menu-view-settings", () => {
+          logger.debug("Preferences menu event received");
+          navigate("/settings");
         }),
 
         listen("menu-check-updates", async () => {
@@ -84,24 +91,19 @@ export function useMainWindowEventListeners() {
           commandContext.openPreferences();
         }),
 
-        listen("menu-toggle-left-sidebar", () => {
-          logger.debug("Toggle left sidebar menu event received");
-          const { leftSidebarVisible, setLeftSidebarVisible } =
-            useUIStore.getState();
-          setLeftSidebarVisible(!leftSidebarVisible);
-        }),
+        // listen("menu-toggle-left-sidebar", () => {
+        //   logger.debug("Toggle left sidebar menu event received");
+        //   const { leftSidebarVisible, setLeftSidebarVisible } =
+        //     useUIStore.getState();
+        //   setLeftSidebarVisible(!leftSidebarVisible);
+        // }),
 
-        listen("menu-toggle-right-sidebar", () => {
-          logger.debug("Toggle right sidebar menu event received");
-          const { rightSidebarVisible, setRightSidebarVisible } =
-            useUIStore.getState();
-          setRightSidebarVisible(!rightSidebarVisible);
-        }),
-
-        listen("menu-show-configurations", () => {
-          logger.debug("Show configurations event received");
-          window.location.href = "https://google.com";
-        }),
+        // listen("menu-toggle-right-sidebar", () => {
+        //   logger.debug("Toggle right sidebar menu event received");
+        //   const { rightSidebarVisible, setRightSidebarVisible } =
+        //     useUIStore.getState();
+        //   setRightSidebarVisible(!rightSidebarVisible);
+        // }),
       ]);
 
       logger.debug(
@@ -130,7 +132,7 @@ export function useMainWindowEventListeners() {
         }
       }
     };
-  }, [commandContext]);
+  }, [commandContext, navigate]);
 
   // Future: Other global event listeners can be added here
   // useWindowFocusListeners()

@@ -1,10 +1,9 @@
 use tauri_specta::{Builder, collect_commands};
 
-use crate::{notifications, path, settings};
+use crate::path;
 
-// use crate::notifications;
-// use crate::preferences;
-// use crate::window;
+use crate::commands::{notifications, settings, windows};
+use crate::settings::AppSettings;
 
 pub fn generate_bindings() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
@@ -14,6 +13,10 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
             notifications::send_native_notification,
             path::get_config_dir,
             path::get_logs_dir,
+            windows::show_dashboard_window,
+            windows::close_dashboard_window,
+            windows::show_main_window,
+            windows::close_main_window,
             // window::open_external_url,
             // recovery::save_emergency_data,
             // recovery::load_emergency_data,
@@ -25,7 +28,7 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
             // quick_pane::update_quick_pane_shortcut,
         ])
         .error_handling(tauri_specta::ErrorHandlingMode::Throw)
-        .typ::<settings::AppSettings>()
+        .typ::<AppSettings>()
 }
 
 /// Export TypeScript bindings to the frontend.

@@ -1,10 +1,12 @@
-use tauri::{Manager, Url, WebviewUrl, WebviewWindowBuilder};
+use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
 
+use crate::constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME};
+
 mod bindings;
+mod commands;
 mod constants;
 mod logger;
-mod notifications;
 mod path;
 mod settings;
 mod tray;
@@ -41,9 +43,12 @@ pub async fn run() {
     // Note: Only applies to windows listed in capabilities (main window only, not quick-pane)
     #[cfg(desktop)]
     {
+        use tauri_plugin_window_state::StateFlags;
+
+        let flags = StateFlags::POSITION | StateFlags::SIZE;
         builder = builder.plugin(
             tauri_plugin_window_state::Builder::new()
-                .with_state_flags(tauri_plugin_window_state::StateFlags::all())
+                .with_state_flags(flags)
                 .build(),
         );
     }
@@ -69,10 +74,14 @@ pub async fn run() {
         .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
             tracing::info!("🚀 Application starting up");
-            tracing::debug!(
-                "App handle initialized for package: {}",
-                app.package_info().name
-            );
+            let main_win = app.get_webview_window(MAIN_WINDOW_NAME).unwrap();
+            let dashboard_win = app.get_webview_window(DASHBOARD_WINDOW_NAME).unwrap();
+
+            #[cfg(not(target_os = "macos"))]
+            main_win.set_always_on_top(true);
+
+            let _ = main_win.hide();
+            let _ = dashboard_win.hide();
 
             let app = app.handle().clone();
 
@@ -103,6 +112,13 @@ pub async fn run() {
             // }
 
             tray::create_tray(&app)?;
+
+            // NOTE: always force settings window to be a certain size
+            // settings.set_size(LogicalSize {
+            //     width: SETTINGS_WINDOW_WIDTH,
+            //     height: SETTINGS_WINDOW_HEIGHT,
+            // })?;
+
             Ok(())
         })
         .build(tauri::generate_context!())

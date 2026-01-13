@@ -47,6 +47,7 @@ tauri-plugin-persisted-scope = "=2.3.4"
 tauri-plugin-positioner = { version = "2.3.1", features = ["tray-icon"] }
 tauri-plugin-process = "=2.3.1"
 tauri-plugin-store = "=2.4.1"
+tauri-plugin-os = "=2.3.2"
 # devtools = "=0.3.4"
 
 tauri-plugin-clipboard-manager = "=2.3.2"
@@ -55,10 +56,13 @@ tauri-plugin-log = "=2.7.1"
 tauri-plugin-opener = "=2.5.2"
 time = { version = "=0.3.41", features = ["serde", "serde-well-known", "std"] }
 tokio = { version = "=1.48.0", features = [
-  "rt-multi-thread",
   "macros",
-  "time",
+  "process",
+  "fs",
   "sync",
+  "rt",
+  "rt-multi-thread",
+  "time",
 ] }
 tracing = "=0.1.41"
 tracing-appender = "=0.2.3"

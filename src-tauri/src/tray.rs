@@ -9,7 +9,11 @@ use tauri::{
     tray::TrayIconBuilder,
 };
 
-use crate::{constants::TRAY_ID, utils::platform::is_windows};
+use crate::{
+    commands::windows::{show_dashboard_window, show_main_window},
+    constants::TRAY_ID,
+    utils::platform::is_windows,
+};
 
 const ICON_CONFIG: &[u8] = include_bytes!("../icons/tray/monitor-config.png");
 const ICON_ERROR: &[u8] = include_bytes!("../icons/tray/monitor-error.png");
@@ -31,11 +35,9 @@ pub enum TrayStatus {
 #[derive(Debug, Clone, Copy, EnumString, Display, Deserialize, PartialEq, Eq, Hash)]
 #[strum(serialize_all = "snake_case")]
 pub enum TrayItem {
-    ShowConfigurations,
-    ViewBuilds,
-    ClearBuilds,
-    ViewAlerts,
-    ClearAlerts,
+    Dashboard,
+    Builds,
+    Alerts,
     Preferences,
     Quit,
 }
@@ -53,38 +55,23 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let menu = MenuBuilder::new(app)
         .item(&MenuItem::with_id(
             app,
-            TrayItem::ShowConfigurations,
-            "Show Configurations",
+            TrayItem::Dashboard,
+            "Dashboard",
             true,
             None::<&str>,
         )?)
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItem::with_id(
             app,
-            TrayItem::ViewBuilds,
-            "View Builds",
+            TrayItem::Builds,
+            "Build History",
             true,
             None::<&str>,
         )?)
         .item(&MenuItem::with_id(
             app,
-            TrayItem::ClearBuilds,
-            "Clear Builds",
-            true,
-            None::<&str>,
-        )?)
-        .item(&PredefinedMenuItem::separator(app)?)
-        .item(&MenuItem::with_id(
-            app,
-            TrayItem::ViewAlerts,
-            "View Alerts",
-            true,
-            None::<&str>,
-        )?)
-        .item(&MenuItem::with_id(
-            app,
-            TrayItem::ClearAlerts,
-            "Clear Alerts",
+            TrayItem::Alerts,
+            "Alert History",
             true,
             None::<&str>,
         )?)
@@ -96,6 +83,7 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             true,
             None::<&str>,
         )?)
+        .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItem::with_id(
             app,
             TrayItem::Quit,
@@ -147,34 +135,28 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event({
-            let _app_handle = app.clone();
             move |app: &AppHandle, event| match TrayItem::try_from(event.id) {
-                Ok(TrayItem::ShowConfigurations) => {
-                    tracing::info!("Show configurations event received");
-                    let _ = app.emit("menu-show-configurations", ());
+                Ok(TrayItem::Dashboard) => {
+                    tracing::debug!("Show dashboard event received");
+                    let _ = show_dashboard_window(app.clone());
                 }
-                Ok(TrayItem::ViewBuilds) => {
-                    tracing::info!("View builds event received");
+                Ok(TrayItem::Builds) => {
+                    tracing::debug!("View builds event received");
                     let _ = app.emit("menu-view-builds", ());
+                    let _ = show_main_window(app.clone(), Some("Builds"));
                 }
-                Ok(TrayItem::ClearBuilds) => {
-                    tracing::info!("Clear builds event received");
-                    let _ = app.emit("menu-clear-builds", ());
-                }
-                Ok(TrayItem::ViewAlerts) => {
-                    tracing::info!("View alerts event received");
+                Ok(TrayItem::Alerts) => {
+                    tracing::debug!("View alerts event received");
                     let _ = app.emit("menu-view-alerts", ());
-                }
-                Ok(TrayItem::ClearAlerts) => {
-                    tracing::info!("Clear alerts event received");
-                    let _ = app.emit("menu-clear-alerts", ());
+                    let _ = show_main_window(app.clone(), Some("Alerts"));
                 }
                 Ok(TrayItem::Preferences) => {
-                    tracing::info!("Preferences event received");
-                    let _ = app.emit("menu-preferences", ());
+                    tracing::debug!("Preferences event received");
+                    let _ = app.emit("menu-view-settings", ());
+                    let _ = show_main_window(app.clone(), Some("Settings"));
                 }
                 Ok(TrayItem::Quit) => {
-                    tracing::info!("Quit event received");
+                    tracing::debug!("Quit event received");
                     app.exit(0);
                 }
                 _ => {
@@ -183,8 +165,8 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
             }
         })
         .on_tray_icon_event({
-            let _app_handle = app.clone();
             move |tray, event| {
+                tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);
                 if let tauri::tray::TrayIconEvent::Click { .. } = event {
                     let _ = tray.set_visible(true);
                 }
@@ -201,9 +183,9 @@ mod tests {
 
     #[test]
     fn test_tray_item_from_menu_id() {
-        let menu_id = MenuId::from("show_configurations");
+        let menu_id = MenuId::from("dashboard");
         let tray_item = TrayItem::try_from(menu_id).unwrap();
-        assert_eq!(tray_item, TrayItem::ShowConfigurations);
+        assert_eq!(tray_item, TrayItem::Dashboard);
 
         let invalid_menu_id = MenuId::from("invalid_item");
         let result = TrayItem::try_from(invalid_menu_id);

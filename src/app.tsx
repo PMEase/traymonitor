@@ -1,14 +1,18 @@
 import { useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
+import ErrorBoundary from "./components/error-boundary";
+import { useMainWindowEventListeners } from "./hooks/use-main-window-event-listeners";
+import { useTheme } from "./hooks/use-theme";
 import { initializeCommandSystem } from "./lib/commands";
 import { logger } from "./lib/logger";
 import { cleanupOldFiles } from "./lib/recovery";
-import "./app.css";
-import ErrorBoundary from "./components/error-boundary";
-import MainWindow from "./components/layout/main-window";
-import { ThemeProvider } from "./components/theme-provider";
+import { AlertsView } from "./views/alerts";
+import { BuildsView } from "./views/builds";
+import { MainView } from "./views/main";
+import { SettingsView } from "./views/settings";
 
 function App() {
-  // Initialize command system and cleanup on app startup
   useEffect(() => {
     logger.info("🚀 Frontend application starting up");
     initializeCommandSystem();
@@ -26,11 +30,35 @@ function App() {
     });
   }, []);
 
+  const { theme } = useTheme();
+
+  // Set up global event listeners (keyboard shortcuts, etc.)
+  useMainWindowEventListeners();
+
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <MainWindow />
-      </ThemeProvider>
+      <Toaster
+        className="toaster group"
+        position="bottom-right"
+        theme={theme === "dark" || theme === "light" ? theme : "system"}
+        toastOptions={{
+          classNames: {
+            toast:
+              "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+            description: "group-[.toast]:text-muted-foreground",
+            actionButton:
+              "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+            cancelButton:
+              "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          },
+        }}
+      />
+      <Routes>
+        <Route Component={MainView} path="/" />
+        <Route Component={SettingsView} path="/settings" />
+        <Route Component={BuildsView} path="/builds" />
+        <Route Component={AlertsView} path="/alerts" />
+      </Routes>
     </ErrorBoundary>
   );
 }

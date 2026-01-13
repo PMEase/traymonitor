@@ -88,7 +88,7 @@ impl AppSettings {
     //         .map_err(|e| format!("Failed to save app settings: {e}"))
     // }
 
-    fn save(&self, app: &AppHandle<Wry>) -> Result<(), String> {
+    pub fn save(&self, app: &AppHandle<Wry>) -> Result<(), String> {
         let Ok(store) = app.store(STORE_FILE_NAME) else {
             return Err("App settings store not found".to_string());
         };
@@ -129,18 +129,3 @@ pub fn server_url(app: &AppHandle<Wry>) -> String {
 
 //     tracing::info!("App settings initialized");
 // }
-
-#[tauri::command]
-#[specta::specta]
-pub async fn load_settings(app: AppHandle<Wry>) -> Result<AppSettings, String> {
-    tracing::debug!("Loading app settings ...");
-    AppSettings::get(&app).map(|settings| settings.unwrap_or_default())
-}
-
-#[tauri::command]
-#[specta::specta]
-pub async fn save_settings(app: AppHandle<Wry>, settings: AppSettings) -> Result<(), String> {
-    tracing::debug!("Saving app settings ...");
-    let _ = settings.save(&app);
-    Ok(())
-}
