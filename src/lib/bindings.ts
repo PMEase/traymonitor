@@ -26,6 +26,21 @@ async getConfigDir() : Promise<string> {
 },
 async getLogsDir() : Promise<string> {
     return await TAURI_INVOKE("get_logs_dir");
+},
+async showDashboardWindow() : Promise<null> {
+    return await TAURI_INVOKE("show_dashboard_window");
+},
+async closeDashboardWindow() : Promise<null> {
+    return await TAURI_INVOKE("close_dashboard_window");
+},
+async showMainWindow(title: string | null) : Promise<null> {
+    return await TAURI_INVOKE("show_main_window", { title });
+},
+async closeMainWindow() : Promise<null> {
+    return await TAURI_INVOKE("close_main_window");
+},
+async getBuilds() : Promise<Build[]> {
+    return await TAURI_INVOKE("get_builds");
 }
 }
 
@@ -39,8 +54,10 @@ async getLogsDir() : Promise<string> {
 
 /** user-defined types **/
 
-export type AppSettings = { enable_notifications?: boolean; notifications_total?: number; theme?: AppTheme; server_url?: string; user?: string; token?: string; poll_interval_in_secs?: number }
+export type AppSettings = { enable_notifications?: boolean; notifications_total?: number; theme?: AppTheme; server_url?: string; user?: string; token?: string; poll_interval_in_secs?: number; last_notified_build_id?: string | null }
 export type AppTheme = "system" | "light" | "dark"
+export type Build = { id: string; configuration: string; configurationPath?: string; masterNodeAddress: string; version: string; status: BuildStatus; beginDate: string; statusDate?: string | null; duration: string; waitDuration: string }
+export type BuildStatus = "SUCCESSFUL" | "RECOMMENDED" | "FAILED" | "CANCELLED" | "TIMEOUT" | "RUNNING"
 
 /** tauri-specta globals **/
 

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use crate::constants::APP_ID;
 
-fn config_dir() -> io::Result<PathBuf> {
+pub fn config_dir() -> io::Result<PathBuf> {
     let path = platform_config_dir();
     if !path.exists() {
         std::fs::create_dir_all(&path)?;

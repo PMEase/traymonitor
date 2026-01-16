@@ -1,16 +1,66 @@
-use tauri::Manager;
+use std::sync::{Arc, Mutex, RwLock};
+
+use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_autostart::MacosLauncher;
 
-use crate::constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME};
+use crate::{
+    constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME},
+    services::build_cache::{self, BuildsCache},
+    types::{build::Build, settings::AppSettings},
+};
 
 mod bindings;
 mod commands;
 mod constants;
 mod logger;
 mod path;
-mod settings;
+mod serde;
+mod services;
 mod tray;
+mod types;
 mod utils;
+
+pub struct AppState {
+    pub settings: AppSettings,
+    pub builds_cache: Arc<RwLock<BuildsCache>>,
+}
+
+impl AppState {
+    pub fn new(settings: AppSettings, builds_cache: BuildsCache) -> Self {
+        Self {
+            settings,
+            builds_cache: Arc::new(RwLock::new(builds_cache)),
+        }
+    }
+
+    pub fn init(app: &AppHandle<Wry>) -> Result<Self, String> {
+        let settings = AppSettings::get(app)?;
+        let builds_cache = build_cache::load_builds_cache()?;
+        Ok(Self::new(settings, builds_cache))
+    }
+
+    pub fn update_settings(&mut self, settings: AppSettings) {
+        self.settings = settings;
+    }
+
+    pub fn add_builds(&mut self, builds: Vec<Build>) {
+        let mut builds_cache = self.builds_cache.write().unwrap();
+        builds_cache.add_builds(builds);
+        if let Err(e) = builds_cache.save() {
+            tracing::error!("Failed to save builds cache: {e}");
+        }
+    }
+
+    pub fn get_builds(&self) -> Vec<Build> {
+        let builds_cache = self.builds_cache.read().unwrap();
+        builds_cache.get_all()
+    }
+
+    pub fn get_last_notified_build_id(&self) -> Option<i64> {
+        let builds_cache = self.builds_cache.read().unwrap();
+        builds_cache.get_last_notified_build_id()
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
@@ -74,6 +124,11 @@ pub async fn run() {
         .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
             tracing::info!("🚀 Application starting up");
+
+            let app = app.handle().clone();
+            let state = AppState::init(&app)?;
+            app.manage(Mutex::new(state));
+
             let main_win = app.get_webview_window(MAIN_WINDOW_NAME).unwrap();
             let dashboard_win = app.get_webview_window(DASHBOARD_WINDOW_NAME).unwrap();
 
@@ -82,8 +137,6 @@ pub async fn run() {
 
             let _ = main_win.hide();
             let _ = dashboard_win.hide();
-
-            let app = app.handle().clone();
 
             specta_builder.mount_events(&app);
 
@@ -113,6 +166,7 @@ pub async fn run() {
 
             tray::create_tray(&app)?;
 
+            tauri::async_runtime::spawn(build_cache::start_service(app.clone()));
             // NOTE: always force settings window to be a certain size
             // settings.set_size(LogicalSize {
             //     width: SETTINGS_WINDOW_WIDTH,

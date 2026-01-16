@@ -1,7 +1,7 @@
 use tauri::AppHandle;
 use tauri_plugin_notifications::NotificationsExt;
 
-use crate::settings::is_enable_notifications;
+use crate::types::settings::is_enable_notifications;
 
 /// Sends a native system notification.
 /// On mobile platforms, returns an error as notifications are not yet supported.
@@ -20,15 +20,15 @@ pub async fn send_native_notification(
 
     tracing::info!("Sending native notification: {title}");
 
-    let mut notification = app.notifications().builder().title(&title);
+    let mut builder = app.notifications().builder().title(&title);
 
     if let Some(body_text) = body {
-        notification = notification.body(body_text);
+        builder = builder.body(body_text);
     }
 
-    match notification.show() {
+    match builder.show() {
         Ok(_) => {
-            tracing::info!("Native notification sent successfully");
+            tracing::debug!("Native notification sent successfully");
             Ok(())
         }
         Err(e) => {

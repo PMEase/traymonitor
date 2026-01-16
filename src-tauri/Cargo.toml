@@ -29,6 +29,8 @@ tauri = { version = "=2.9.3", features = [
 open = "=3.2.0"
 anyhow = "=1.0.100"
 regex = "=1.12.2"
+reqwest = { version = "=0.13.1", features = ["json", "rustls", "query"] }
+ringbuffer = "=0.16.0"
 rustc-hash = "=2.1.1"
 dirs = "=6.0.0"
 serde = { version = "=1.0.228", default-features = false, features = [
@@ -70,9 +72,14 @@ tracing-attributes = "=0.1.29"
 tracing-subscriber = { version = "=0.3.20", features = ["env-filter", "json"] }
 
 # Type-safe Tauri command bindings
-specta = { version = "=2.0.0-rc.22", features = ["derive", "serde_json"] }
+specta = { version = "=2.0.0-rc.22", features = [
+  "derive",
+  "serde_json",
+  "time",
+] }
 tauri-specta = { version = "=2.0.0-rc.21", features = ["typescript"] }
 specta-typescript = "=0.0.9"
+bon = "3.8.2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "=2.3.6"

@@ -30,6 +30,14 @@ pub struct AppSettings {
     pub token: String,
     #[serde(default = "default_poll_interval_in_secs")]
     pub poll_interval_in_secs: u32,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "crate::serde::option_u64_as_string"
+    )]
+    pub last_notified_build_id: Option<u64>,
+    #[serde(default)]
+    pub paused: bool,
 }
 
 fn default_enable_notifications() -> bool {
@@ -54,10 +62,12 @@ impl Default for AppSettings {
             enable_notifications: default_enable_notifications(),
             notifications_total: default_notifications_total(),
             theme: default_theme(),
-            server_url: "http://quickbuild:8810".to_string(),
-            user: "user".to_string(),
-            token: "token".to_string(),
+            server_url: "".to_string(),
+            user: "".to_string(),
+            token: "".to_string(),
             poll_interval_in_secs: default_poll_interval_in_secs(),
+            last_notified_build_id: None,
+            paused: false,
         }
     }
 }
@@ -65,28 +75,32 @@ impl Default for AppSettings {
 const STORE_FILE_NAME: &str = "settings.json";
 
 impl AppSettings {
-    pub fn get(app: &AppHandle<Wry>) -> Result<Option<Self>, String> {
+    pub fn is_configured(&self) -> bool {
+        !self.server_url.is_empty() && !self.user.is_empty() && !self.token.is_empty()
+    }
+
+    pub fn get(app: &AppHandle<Wry>) -> Result<Self, String> {
         match app.store(STORE_FILE_NAME).map(|s| s.get("settings")) {
             Ok(Some(store)) => match serde_json::from_value(store) {
-                Ok(settings) => Ok(Some(settings)),
+                Ok(settings) => Ok(settings),
                 Err(e) => Err(format!("Failed to deserialize app settings: {e}")),
             },
-            _ => Ok(None),
+            _ => Ok(Self::default()),
         }
     }
 
-    // pub fn update(app: &AppHandle<Wry>, update: impl FnOnce(&mut Self)) -> Result<(), String> {
-    //     let Ok(store) = app.store(STORE_FILE_NAME) else {
-    //         return Err("App settings store not found".to_string());
-    //     };
+    pub fn update(app: &AppHandle<Wry>, update: impl FnOnce(&mut Self)) -> Result<(), String> {
+        let Ok(store) = app.store(STORE_FILE_NAME) else {
+            return Err("App settings store not found".to_string());
+        };
 
-    //     let mut settings = Self::get(app)?.unwrap_or_default();
-    //     update(&mut settings);
-    //     store.set("settings", json!(settings));
-    //     store
-    //         .save()
-    //         .map_err(|e| format!("Failed to save app settings: {e}"))
-    // }
+        let mut settings = Self::get(app)?;
+        update(&mut settings);
+        store.set("settings", json!(settings));
+        store
+            .save()
+            .map_err(|e| format!("Failed to save app settings: {e}"))
+    }
 
     pub fn save(&self, app: &AppHandle<Wry>) -> Result<(), String> {
         let Ok(store) = app.store(STORE_FILE_NAME) else {
@@ -102,13 +116,13 @@ impl AppSettings {
 
 pub fn is_enable_notifications(app: &AppHandle<Wry>) -> bool {
     AppSettings::get(app)
-        .map(|settings| settings.unwrap_or_default().enable_notifications)
+        .map(|settings| settings.enable_notifications)
         .unwrap_or_default()
 }
 
 pub fn server_url(app: &AppHandle<Wry>) -> String {
     AppSettings::get(app)
-        .map(|settings| settings.unwrap_or_default().server_url.clone())
+        .map(|settings| settings.server_url.clone())
         .unwrap_or_default()
 }
 

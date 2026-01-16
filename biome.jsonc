@@ -16,7 +16,7 @@
       "**/*.tsx",
       "!**/*.js",
       "!**/lib/bindings.ts",
-      "!src/components/ui"
+      "!**/src/components/ui"
     ]
   },
   "linter": {

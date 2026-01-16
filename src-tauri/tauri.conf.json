@@ -16,7 +16,7 @@
         "fullscreen": false,
         "resizable": true,
         "minimizable": false,
-        "transparent": true,
+        "transparent": false,
         "decorations": true,
         "label": "main",
         "title": "QuickBuild Tray Monitor",
@@ -26,7 +26,7 @@
         "minWidth": 64
       },
       {
-        "transparent": true,
+        "transparent": false,
         "decorations": true,
         "resizable": true,
         "visible": false,

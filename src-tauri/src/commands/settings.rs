@@ -1,18 +1,24 @@
-use tauri::{AppHandle, Wry};
+use std::sync::Mutex;
 
-use crate::settings::AppSettings;
+use tauri::{AppHandle, Manager, State, Wry};
+
+use crate::{AppState, types::settings::AppSettings};
 
 #[tauri::command]
 #[specta::specta]
-pub async fn load_settings(app: AppHandle<Wry>) -> Result<AppSettings, String> {
-    tracing::debug!("Loading app settings ...");
-    AppSettings::get(&app).map(|settings| settings.unwrap_or_default())
+pub fn load_settings(state: State<'_, Mutex<AppState>>) -> Result<AppSettings, String> {
+    tracing::info!("Loading app settings ...");
+    let settings = state.lock().unwrap().settings.clone();
+    Ok(settings)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn save_settings(app: AppHandle<Wry>, settings: AppSettings) -> Result<(), String> {
-    tracing::debug!("Saving app settings ...");
-    let _ = settings.save(&app);
+pub fn save_settings(app: AppHandle<Wry>, settings: AppSettings) -> Result<(), String> {
+    tracing::info!("Saving app settings ...");
+    let state = app.state::<Mutex<AppState>>();
+    settings.save(&app)?;
+    state.lock().unwrap().update_settings(settings);
+
     Ok(())
 }

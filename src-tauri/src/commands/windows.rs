@@ -3,7 +3,7 @@ use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::{
     constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME},
-    settings::server_url,
+    types::settings::server_url,
 };
 
 #[tauri::command]
