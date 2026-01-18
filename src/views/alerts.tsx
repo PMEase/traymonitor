@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
+import { format } from "date-fns";
 import { AlertCircleIcon, RefreshCcwIcon } from "lucide-react";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Alert } from "@/lib/bindings";
+import type { Alert, AlertPriority } from "@/lib/bindings";
 import { logger } from "@/lib/logger";
+import { cn } from "@/lib/utils";
 import { useAlerts } from "@/services/alerts";
 
 export const AlertsView = () => {
@@ -134,21 +136,51 @@ const AlertPanel = ({
   className?: string;
 }) => {
   return (
-    <div className={className}>
-      <div className="flex items-center">
-        <AlertCircleIcon className="size-4 text-red-500" />
-        <span className="ml-2 font-medium text-sm">{alert.subject}</span>
+    <div className={cn("flex gap-2", className)}>
+      <div className="flex-0">
+        <AlertPriorityLabel priority={alert.priority} />
       </div>
-      <div className="flex items-center">
-        <span className="text-muted-foreground text-sm">
-          {alert.alertMessage}
-        </span>
-      </div>
-      <div className="flex items-center">
-        <span className="text-muted-foreground text-sm">
-          fixed: {alert.fixed}
-        </span>
+      <div className="flex-1 overflow-x-hidden">
+        <div className="mb-2 flex flex-col gap-1">
+          <div className="flex-1 font-semibold text-md">{alert.subject}</div>
+          <div className="text-muted-foreground text-xs">
+            {formatDateTime(alert.ctime)}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <div className="text-sm">{alert.alertMessage}</div>
+        </div>
       </div>
     </div>
   );
 };
+
+const AlertPriorityLabel = ({
+  priority,
+}: {
+  priority: AlertPriority;
+}): ReactNode => {
+  const classes = `flex items-center justify-center font-mono text-xl leading-none
+  border rounded-full size-6
+  `;
+
+  switch (priority) {
+    case "LOW":
+      return (
+        <div className={cn(classes, "border-green-9 text-green-9")}>L</div>
+      );
+    case "MEDIUM":
+      return (
+        <div className={cn(classes, "border-orange-9 text-orange-9")}>M</div>
+      );
+    case "HIGH":
+      return <div className={cn(classes, "border-red-9 text-red-9")}>H</div>;
+    default:
+      return <div className={cn(classes, "border-gray-9 text-gray-9")}>?</div>;
+  }
+};
+
+function formatDateTime(ctime: string): string {
+  const dt = new Date(ctime);
+  return format(dt, "yyyy-MM-dd HH:mm:ss");
+}

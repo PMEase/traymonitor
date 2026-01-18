@@ -129,8 +129,14 @@ async fn fetch_alerts(
                     let body = alert.alert_message.clone();
                     let _ = send_native_notification(app.clone(), title, Some(body)).await;
                 } else {
-                    let title = format!("{} new alerts are available", len);
-                    let _ = send_native_notification(app.clone(), title, None).await;
+                    let alert = &alerts[0];
+                    let title = format!("{} and more alerts ...", alert.subject);
+                    let body = format!(
+                        "{}\n\n and {} more ...",
+                        alert.alert_message.clone(),
+                        len - 1
+                    );
+                    let _ = send_native_notification(app.clone(), title, Some(body)).await;
                 }
 
                 let _ = state.lock().unwrap().add_alerts(alerts);
