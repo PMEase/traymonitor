@@ -1,9 +1,3 @@
-use std::sync::{Arc, Mutex, RwLock};
-
-use tauri::{AppHandle, Manager, Wry};
-use tauri_plugin_autostart::MacosLauncher;
-use time::PrimitiveDateTime;
-
 use crate::{
     constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME},
     services::{
@@ -13,6 +7,10 @@ use crate::{
     },
     types::{alert::Alert, build::Build, settings::AppSettings},
 };
+use std::sync::{Arc, Mutex, RwLock};
+use tauri::{AppHandle, Manager, Wry};
+use tauri_plugin_autostart::MacosLauncher;
+use time::OffsetDateTime;
 
 mod bindings;
 mod commands;
@@ -30,7 +28,7 @@ pub struct AppState {
     pub build_store: Arc<RwLock<BuildStore>>,
     pub alert_store: Arc<RwLock<AlertStore>>,
     pub server_error: Option<String>,
-    pub last_polling_time: Option<PrimitiveDateTime>,
+    pub last_polling_time: Option<OffsetDateTime>,
 }
 
 impl AppState {
@@ -80,6 +78,11 @@ impl AppState {
     pub fn get_last_notified_build_id(&self) -> Option<i64> {
         let builds_store = self.build_store.read().unwrap();
         builds_store.get_last_notified_build_id()
+    }
+
+    pub fn get_alerts(&self) -> Vec<Alert> {
+        let alerts_store = self.alert_store.read().unwrap();
+        alerts_store.get_all()
     }
 
     pub fn get_last_notified_time(&self) -> Option<i64> {

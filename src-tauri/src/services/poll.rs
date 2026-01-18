@@ -1,11 +1,12 @@
 use std::{sync::Mutex, time::Duration};
 
 use tauri::{AppHandle, Emitter, Manager, Wry};
+use time::OffsetDateTime;
 use tokio::time::sleep;
 
 use crate::{
     AppState, commands::notifications::send_native_notification,
-    services::quickbuild::QuickBuildService, utils::times,
+    services::quickbuild::QuickBuildService,
 };
 
 pub async fn start(app: AppHandle<Wry>) {
@@ -68,7 +69,7 @@ pub async fn start(app: AppHandle<Wry>) {
             app.emit("refresh-page", ()).unwrap();
         }
 
-        state.lock().unwrap().last_polling_time = Some(times::now());
+        state.lock().unwrap().last_polling_time = Some(OffsetDateTime::now_utc());
 
         sleep(Duration::from_secs(settings.poll_interval_in_secs as u64)).await;
     }
@@ -113,6 +114,10 @@ async fn fetch_alerts(
     state: &Mutex<AppState>,
 ) -> Result<usize, String> {
     let last_notified_time = state.lock().unwrap().get_last_notified_time();
+    tracing::info!(
+        "Fetching alerts with last notified time: {:?}",
+        last_notified_time
+    );
     match quickbuild.get_alerts(last_notified_time).await {
         Ok(alerts) => {
             let len = alerts.len();

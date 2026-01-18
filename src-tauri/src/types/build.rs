@@ -3,8 +3,6 @@ use specta::Type;
 use strum::{Display, EnumString};
 use time::OffsetDateTime;
 
-use crate::utils::times::{format_date_time, format_duration};
-
 #[derive(Serialize, Deserialize, Type, Debug, Clone, EnumString, Display)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum BuildStatus {
@@ -60,15 +58,11 @@ impl Build {
     pub fn get_body(&self) -> Result<String, String> {
         Ok(format!(
             r#"
-        Configuration:    {}
-        Triggered by:     {}
-        Begin Date:       {}
-        Duration:         {}
+Configuration:    {}
+Triggered by:     {}
         "#,
             self.configuration_path,
             self.requester_name.as_ref().unwrap_or(&String::new()),
-            format_date_time(self.begin_date, crate::constants::DATE_TIME_FORMAT)?,
-            format_duration(self.duration),
         ))
     }
 }

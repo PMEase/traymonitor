@@ -4,11 +4,10 @@ pub mod four_year_iso8601 {
     use serde::{Deserialize, Deserializer};
     use serde::{Serialize, Serializer};
     use time::OffsetDateTime;
+    use time::format_description::well_known::iso8601;
     use time::format_description::well_known::iso8601::EncodedConfig;
-    use time::format_description::well_known::{Iso8601, iso8601};
 
-    // use time::format_description::well_known::Iso8601;
-    // use time::format_description::well_known::iso8601::{Config, EncodedConfig};
+    use time::format_description::well_known::Iso8601;
 
     pub(crate) const SERDE_CONFIG: EncodedConfig = iso8601::Config::DEFAULT
         .set_year_is_six_digits(false)
@@ -65,6 +64,7 @@ pub mod option_four_year_iso8601 {
     }
 }
 
+#[allow(dead_code)]
 pub mod option_u64_as_string {
     use serde::{Deserialize, Deserializer, Serializer};
     use std::str::FromStr;
@@ -125,6 +125,7 @@ pub mod option_time_iso8601 {
     }
 }
 
+#[allow(dead_code)]
 pub mod bigint_as_string {
     use std::fmt::Display;
     use std::str::FromStr;
@@ -153,6 +154,7 @@ pub mod bigint_as_string {
     }
 }
 
+#[allow(dead_code)]
 pub mod unix_time_milliseconds_to_offset_date_time {
     use serde::{Deserialize, Deserializer, Serializer};
     use time::OffsetDateTime;
@@ -178,6 +180,7 @@ pub mod unix_time_milliseconds_to_offset_date_time {
     }
 }
 
+#[allow(dead_code)]
 pub mod unix_time_milliseconds_to_option_offset_date_time {
     use serde::{Deserialize, Deserializer, Serializer};
     use time::OffsetDateTime;

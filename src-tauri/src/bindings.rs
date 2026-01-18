@@ -1,10 +1,12 @@
 use specta_typescript::BigIntExportBehavior;
 use tauri_specta::{Builder, collect_commands};
 
+use crate::commands::alerts::{self, GetAlertsResponse};
 use crate::commands::builds::GetBuildsResponse;
 use crate::path;
 
 use crate::commands::{builds, notifications, settings, windows};
+use crate::types::alert::{Alert, AlertCategory, AlertPriority};
 use crate::types::build::Build;
 use crate::types::settings::AppSettings;
 
@@ -21,6 +23,7 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
             windows::show_main_window,
             windows::close_main_window,
             builds::get_builds,
+            alerts::get_alerts,
             // window::open_external_url,
             // recovery::save_emergency_data,
             // recovery::load_emergency_data,
@@ -35,6 +38,10 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
         .typ::<AppSettings>()
         .typ::<Build>()
         .typ::<GetBuildsResponse>()
+        .typ::<Alert>()
+        .typ::<AlertPriority>()
+        .typ::<AlertCategory>()
+        .typ::<GetAlertsResponse>()
 }
 
 /// Export TypeScript bindings to the frontend.

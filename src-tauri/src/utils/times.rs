@@ -14,12 +14,12 @@ use time::{
     },
 };
 
-pub fn format_date_time(date_time: OffsetDateTime, format: &str) -> Result<String, String> {
+pub fn format_date_time(date_time: PrimitiveDateTime, format: &str) -> Result<String, String> {
     let fmt = format_description::parse(format).map_err(|e| e.to_string())?;
     date_time.format(&fmt).map_err(|e| e.to_string())
 }
 
-pub const FORMAT_CONFIG: EncodedConfig = Config::DEFAULT
+const FORMAT_CONFIG: EncodedConfig = Config::DEFAULT
     .set_time_precision(TimePrecision::Second {
         decimal_digits: NonZeroU8::new(3),
     })
@@ -121,7 +121,7 @@ mod tests {
         let date_time = datetime!(2026-01-17 10:08:23 +08:00);
 
         assert_eq!(
-            format_date_time(date_time, crate::constants::DATE_TIME_FORMAT).unwrap(),
+            format_date_time(odt_to_pdt(date_time), crate::constants::DATE_TIME_FORMAT).unwrap(),
             "2026-01-17 10:08:23"
         );
     }

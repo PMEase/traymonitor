@@ -30,12 +30,6 @@ pub struct AppSettings {
     pub token: String,
     #[serde(default = "default_poll_interval_in_secs")]
     pub poll_interval_in_secs: u32,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        with = "crate::serde::option_u64_as_string"
-    )]
-    pub last_notified_build_id: Option<u64>,
     #[serde(default)]
     pub paused: bool,
 }
@@ -66,7 +60,6 @@ impl Default for AppSettings {
             user: "".to_string(),
             token: "".to_string(),
             poll_interval_in_secs: default_poll_interval_in_secs(),
-            last_notified_build_id: None,
             paused: false,
         }
     }
