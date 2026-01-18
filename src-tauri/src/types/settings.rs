@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use specta::Type;
-use tauri::{AppHandle, Wry};
+use tauri::{AppHandle, Url, Wry};
 use tauri_plugin_store::StoreExt;
 
 #[derive(Default, Debug, Copy, Clone, Serialize, Deserialize, Type)]
@@ -79,6 +79,10 @@ impl AppSettings {
         !self.server_url.is_empty() && !self.user.is_empty() && !self.token.is_empty()
     }
 
+    pub fn get_dashboard_url(&self) -> Url {
+        format!("{}/lite", self.server_url).parse().unwrap()
+    }
+
     pub fn get(app: &AppHandle<Wry>) -> Result<Self, String> {
         match app.store(STORE_FILE_NAME).map(|s| s.get("settings")) {
             Ok(Some(store)) => match serde_json::from_value(store) {
@@ -112,18 +116,6 @@ impl AppSettings {
             .save()
             .map_err(|e| format!("Failed to save app settings: {e}"))
     }
-}
-
-pub fn is_enable_notifications(app: &AppHandle<Wry>) -> bool {
-    AppSettings::get(app)
-        .map(|settings| settings.enable_notifications)
-        .unwrap_or_default()
-}
-
-pub fn server_url(app: &AppHandle<Wry>) -> String {
-    AppSettings::get(app)
-        .map(|settings| settings.server_url.clone())
-        .unwrap_or_default()
 }
 
 // pub fn init(app: &AppHandle<Wry>) {

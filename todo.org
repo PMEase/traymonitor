@@ -1,0 +1,13 @@
+#+title: Tray Monitor Todo List
+#+author: Zhenyu Luo
+#+date:
+
+
+* Tauri Backend
+** Update tray icon based on the status
+** Pause polling scheduler
+
+
+* Tauri Frontend
+** Builds page
+** Alerts page

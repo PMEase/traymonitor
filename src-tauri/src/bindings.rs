@@ -1,6 +1,7 @@
 use specta_typescript::BigIntExportBehavior;
 use tauri_specta::{Builder, collect_commands};
 
+use crate::commands::builds::GetBuildsResponse;
 use crate::path;
 
 use crate::commands::{builds, notifications, settings, windows};
@@ -33,6 +34,7 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
         .error_handling(tauri_specta::ErrorHandlingMode::Throw)
         .typ::<AppSettings>()
         .typ::<Build>()
+        .typ::<GetBuildsResponse>()
 }
 
 /// Export TypeScript bindings to the frontend.

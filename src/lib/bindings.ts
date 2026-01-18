@@ -39,7 +39,7 @@ async showMainWindow(title: string | null) : Promise<null> {
 async closeMainWindow() : Promise<null> {
     return await TAURI_INVOKE("close_main_window");
 },
-async getBuilds() : Promise<Build[]> {
+async getBuilds() : Promise<GetBuildsResponse> {
     return await TAURI_INVOKE("get_builds");
 }
 }
@@ -54,10 +54,11 @@ async getBuilds() : Promise<Build[]> {
 
 /** user-defined types **/
 
-export type AppSettings = { enable_notifications?: boolean; notifications_total?: number; theme?: AppTheme; server_url?: string; user?: string; token?: string; poll_interval_in_secs?: number; last_notified_build_id?: string | null }
+export type AppSettings = { enable_notifications?: boolean; notifications_total?: number; theme?: AppTheme; server_url?: string; user?: string; token?: string; poll_interval_in_secs?: number; last_notified_build_id?: string | null; paused?: boolean }
 export type AppTheme = "system" | "light" | "dark"
-export type Build = { id: string; configuration: string; configurationPath?: string; masterNodeAddress: string; version: string; status: BuildStatus; beginDate: string; statusDate?: string | null; duration: string; waitDuration: string }
+export type Build = { id: string; configuration: string; configurationPath?: string; masterNodeAddress: string; requester: string; requesterName?: string | null; canceller?: string | null; cancellerName?: string | null; version: string; status: BuildStatus; beginDate: string; statusDate?: string | null; duration: string; waitDuration: string }
 export type BuildStatus = "SUCCESSFUL" | "RECOMMENDED" | "FAILED" | "CANCELLED" | "TIMEOUT" | "RUNNING"
+export type GetBuildsResponse = { builds: Build[]; error: string | null }
 
 /** tauri-specta globals **/
 

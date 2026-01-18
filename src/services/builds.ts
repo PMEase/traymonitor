@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
-import type { Build } from "@/lib/bindings";
+import type { GetBuildsResponse } from "@/lib/bindings";
 import { logger } from "@/lib/logger";
 
 // Query keys for preferences
@@ -13,12 +13,12 @@ export const buildsQueryKeys = {
 export function useBuilds() {
   return useQuery({
     queryKey: buildsQueryKeys.builds(),
-    queryFn: async (): Promise<Build[]> => {
+    queryFn: async (): Promise<GetBuildsResponse> => {
       try {
         logger.debug("Loading builds from backend");
-        const builds = await invoke<Build[]>("get_builds");
-        logger.info("Builds loaded successfully", { builds });
-        return builds;
+        const response = await invoke<GetBuildsResponse>("get_builds");
+        logger.info("Builds loaded successfully");
+        return response;
       } catch (error) {
         logger.error("Failed to load builds", { error });
         throw new Error(

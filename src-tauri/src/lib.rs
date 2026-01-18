@@ -2,11 +2,16 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_autostart::MacosLauncher;
+use time::PrimitiveDateTime;
 
 use crate::{
     constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME},
-    services::build_cache::{self, BuildsCache},
-    types::{build::Build, settings::AppSettings},
+    services::{
+        alert_store::{AlertStore, create_alert_store},
+        build_store::{BuildStore, create_build_store},
+        poll,
+    },
+    types::{alert::Alert, build::Build, settings::AppSettings},
 };
 
 mod bindings;
@@ -22,43 +27,75 @@ mod utils;
 
 pub struct AppState {
     pub settings: AppSettings,
-    pub builds_cache: Arc<RwLock<BuildsCache>>,
+    pub build_store: Arc<RwLock<BuildStore>>,
+    pub alert_store: Arc<RwLock<AlertStore>>,
+    pub server_error: Option<String>,
+    pub last_polling_time: Option<PrimitiveDateTime>,
 }
 
 impl AppState {
-    pub fn new(settings: AppSettings, builds_cache: BuildsCache) -> Self {
+    pub fn new(settings: AppSettings, builds_cache: BuildStore, alert_store: AlertStore) -> Self {
         Self {
             settings,
-            builds_cache: Arc::new(RwLock::new(builds_cache)),
+            build_store: Arc::new(RwLock::new(builds_cache)),
+            alert_store: Arc::new(RwLock::new(alert_store)),
+            server_error: None,
+            last_polling_time: None,
         }
     }
 
     pub fn init(app: &AppHandle<Wry>) -> Result<Self, String> {
         let settings = AppSettings::get(app)?;
-        let builds_cache = build_cache::load_builds_cache()?;
-        Ok(Self::new(settings, builds_cache))
+        let build_store = create_build_store()?;
+        let alert_store = create_alert_store()?;
+        Ok(Self::new(settings, build_store, alert_store))
     }
 
-    pub fn update_settings(&mut self, settings: AppSettings) {
+    pub fn reload_settings(&mut self, app: &AppHandle<Wry>) -> Result<(), String> {
+        let settings = AppSettings::get(app)?;
         self.settings = settings;
+        Ok(())
     }
 
-    pub fn add_builds(&mut self, builds: Vec<Build>) {
-        let mut builds_cache = self.builds_cache.write().unwrap();
+    pub fn add_builds(&mut self, builds: Vec<Build>) -> Result<(), String> {
+        if builds.is_empty() {
+            return Ok(());
+        }
+
+        let mut builds_cache = self.build_store.write().unwrap();
         builds_cache.add_builds(builds);
         if let Err(e) = builds_cache.save() {
-            tracing::error!("Failed to save builds cache: {e}");
+            tracing::error!("Failed to save builds: {e}");
+            Err(format!("Failed to save builds: {e}"))
+        } else {
+            Ok(())
         }
     }
 
     pub fn get_builds(&self) -> Vec<Build> {
-        let builds_cache = self.builds_cache.read().unwrap();
+        let builds_cache = self.build_store.read().unwrap();
         builds_cache.get_all()
     }
 
     pub fn get_last_notified_build_id(&self) -> Option<i64> {
-        let builds_cache = self.builds_cache.read().unwrap();
-        builds_cache.get_last_notified_build_id()
+        let builds_store = self.build_store.read().unwrap();
+        builds_store.get_last_notified_build_id()
+    }
+
+    pub fn get_last_notified_time(&self) -> Option<i64> {
+        let alerts_store = self.alert_store.read().unwrap();
+        alerts_store.get_last_notified_time()
+    }
+
+    pub fn add_alerts(&mut self, alerts: Vec<Alert>) -> Result<(), String> {
+        let mut alerts_store = self.alert_store.write().unwrap();
+        alerts_store.add_alerts(alerts);
+        if let Err(e) = alerts_store.save() {
+            tracing::error!("Failed to save alerts: {e}");
+            Err(format!("Failed to save alerts: {e}"))
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -116,6 +153,7 @@ pub async fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_persisted_scope::init())
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -130,43 +168,32 @@ pub async fn run() {
             app.manage(Mutex::new(state));
 
             let main_win = app.get_webview_window(MAIN_WINDOW_NAME).unwrap();
-            let dashboard_win = app.get_webview_window(DASHBOARD_WINDOW_NAME).unwrap();
-
             #[cfg(not(target_os = "macos"))]
             main_win.set_always_on_top(true);
 
             let _ = main_win.hide();
-            let _ = dashboard_win.hide();
 
-            specta_builder.mount_events(&app);
-
+            let dashboard_win = app.get_webview_window(DASHBOARD_WINDOW_NAME).unwrap();
             // WebviewWindowBuilder::new(&app, "dashboard", WebviewUrl::default())
-            //     .title("Dashboard")
+            //     .title("QuickBuild Tray Monitor - Dashboard")
             //     .inner_size(1200.0, 800.0)
             //     .resizable(true)
             //     .decorations(true)
             //     .always_on_top(false)
-            //     .build()
-            //     .unwrap();
+            //     .build()?;
 
-            // if let Some(dashboard) = app.get_webview_window("dashboard") {
-            //     let server_url = settings::server_url(&app);
-            //     let url: Url = format!("{server_url}/lite")
-            //         .parse()
-            //         .map_err(|e| format!("Failed to parse URL: {e}"))?;
-            //     tracing::info!("Navigating to URL: {}", url);
-            //     let _ = dashboard.hide();
-            //     let _ = dashboard.set_title("QuickBuild Dashboard");
-            //     let _ = dashboard
-            //         // .eval(format!("window.location.href = '{}';", url))
-            //         .navigate(url)
-            //         .map_err(|e| format!("Failed to navigate to URL: {e}"));
-            //     let _ = dashboard.show();
-            // }
+            let _ = dashboard_win.hide();
 
+            let state = app.state::<Mutex<AppState>>();
+            let settings = state.lock().unwrap().settings.clone();
+            if settings.is_configured() {
+                let _ = dashboard_win.navigate(settings.get_dashboard_url());
+            }
+
+            specta_builder.mount_events(&app);
             tray::create_tray(&app)?;
+            tauri::async_runtime::spawn(poll::start(app.clone()));
 
-            tauri::async_runtime::spawn(build_cache::start_service(app.clone()));
             // NOTE: always force settings window to be a certain size
             // settings.set_size(LogicalSize {
             //     width: SETTINGS_WINDOW_WIDTH,

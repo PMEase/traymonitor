@@ -1,15 +1,16 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::Mutex};
 
 use serde::Deserialize;
 use strum::{Display, EnumString};
 use tauri::{
-    AppHandle, Emitter,
+    AppHandle, Emitter, Manager,
     image::Image,
     menu::{Menu, MenuBuilder, MenuId, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
 };
 
 use crate::{
+    AppState,
     commands::windows::{show_dashboard_window, show_main_window},
     constants::TRAY_ID,
     utils::platform::is_windows,
@@ -38,6 +39,7 @@ pub enum TrayItem {
     Dashboard,
     Builds,
     Alerts,
+    Paused,
     Preferences,
     Quit,
 }
@@ -135,32 +137,44 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event({
-            move |app: &AppHandle, event| match TrayItem::try_from(event.id) {
-                Ok(TrayItem::Dashboard) => {
-                    tracing::debug!("Show dashboard event received");
-                    let _ = show_dashboard_window(app.clone());
+            move |app: &AppHandle, event| {
+                let item = TrayItem::try_from(event.id);
+                let state = app.state::<Mutex<AppState>>();
+                let settings = &state.lock().unwrap().settings;
+                if item == Ok(TrayItem::Quit) {
+                    app.exit(0);
+                    return;
                 }
-                Ok(TrayItem::Builds) => {
-                    tracing::debug!("View builds event received");
-                    let _ = app.emit("menu-view-builds", ());
-                    let _ = show_main_window(app.clone(), Some("Builds"));
-                }
-                Ok(TrayItem::Alerts) => {
-                    tracing::debug!("View alerts event received");
-                    let _ = app.emit("menu-view-alerts", ());
-                    let _ = show_main_window(app.clone(), Some("Alerts"));
-                }
-                Ok(TrayItem::Preferences) => {
-                    tracing::debug!("Preferences event received");
+
+                if !settings.is_configured() {
                     let _ = app.emit("menu-view-settings", ());
                     let _ = show_main_window(app.clone(), Some("Settings"));
+                    return;
                 }
-                Ok(TrayItem::Quit) => {
-                    tracing::debug!("Quit event received");
-                    app.exit(0);
-                }
-                _ => {
-                    tracing::error!("Unhandled tray item event");
+
+                match item {
+                    Ok(TrayItem::Dashboard) => {
+                        tracing::debug!("Show dashboard event received");
+                        let _ = show_dashboard_window(app.clone());
+                    }
+                    Ok(TrayItem::Builds) => {
+                        tracing::debug!("View builds event received");
+                        let _ = app.emit("menu-view-builds", ());
+                        let _ = show_main_window(app.clone(), Some("Builds"));
+                    }
+                    Ok(TrayItem::Alerts) => {
+                        tracing::debug!("View alerts event received");
+                        let _ = app.emit("menu-view-alerts", ());
+                        let _ = show_main_window(app.clone(), Some("Alerts"));
+                    }
+                    Ok(TrayItem::Preferences) => {
+                        tracing::debug!("Preferences event received");
+                        let _ = app.emit("menu-view-settings", ());
+                        let _ = show_main_window(app.clone(), Some("Settings"));
+                    }
+                    _ => {
+                        tracing::error!("Unhandled tray item event");
+                    }
                 }
             }
         })

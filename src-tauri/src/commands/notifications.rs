@@ -1,7 +1,9 @@
-use tauri::AppHandle;
+use std::sync::Mutex;
+
+use tauri::{AppHandle, Manager};
 use tauri_plugin_notifications::NotificationsExt;
 
-use crate::types::settings::is_enable_notifications;
+use crate::AppState;
 
 /// Sends a native system notification.
 /// On mobile platforms, returns an error as notifications are not yet supported.
@@ -12,7 +14,9 @@ pub async fn send_native_notification(
     title: String,
     body: Option<String>,
 ) -> Result<(), String> {
-    let enable_notifications = is_enable_notifications(&app);
+    let state = app.state::<Mutex<AppState>>();
+    let settings = &state.lock().unwrap().settings;
+    let enable_notifications = settings.enable_notifications;
     if !enable_notifications {
         tracing::info!("Notifications are disabled");
         return Ok(());
