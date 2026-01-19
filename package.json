@@ -17,6 +17,7 @@
     "lint": "ultracite check",
     "lint:fix": "ultracite fix",
     "ultracite": "ultracite",
+    "format": "pnpm run lint:fix && pnpm run rust:fmt && pnpm run rust:clippy:fix",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",

@@ -26,9 +26,11 @@ export const AlertsView = () => {
 
     const setupListener = async () => {
       try {
-        const unlisten = await listen("refresh-page", () => {
+        const unlisten = await listen("alerts-refresh-page", () => {
           if (isMounted) {
-            logger.debug("Received refresh-page event, refreshing page now...");
+            logger.debug(
+              "Received alerts-refresh-page event, refreshing page now..."
+            );
             refetch();
           }
         });
@@ -39,7 +41,7 @@ export const AlertsView = () => {
           unlisten();
         }
       } catch (error) {
-        logger.error("Failed to set up refresh-page listener", {
+        logger.error("Failed to set up alerts-refresh-page listener", {
           error,
         });
       }
@@ -104,8 +106,8 @@ export const AlertsView = () => {
   }
 
   return (
-    <Card className="m-2 gap-0 py-0">
-      <CardHeader className="border-gray-200 border-b py-4! font-bold text-xl dark:border-gray-800">
+    <Card className="m-0 gap-0 rounded-none border-none py-0">
+      <CardHeader className="border-gray-200 border-b py-2! font-bold text-xl dark:border-gray-800">
         <CardTitle className="flex items-center">
           <span className="flex-1">Alerts</span>
           <Button
@@ -120,9 +122,9 @@ export const AlertsView = () => {
       </CardHeader>
       <CardContent className="p-0">{alertContent}</CardContent>
       <CardFooter>
-        <span className="py-2 text-muted-foreground text-sm">
+        <div className="py-5 text-muted-foreground text-sm">
           Last updated: 10 seconds ago
-        </span>
+        </div>
       </CardFooter>
     </Card>
   );

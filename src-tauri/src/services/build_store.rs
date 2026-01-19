@@ -1,10 +1,5 @@
-use crate::{
-    constants::{BUILD_STORE_FILE_NAME, MAX_STORE_ROWS},
-    path,
-    types::build::Build,
-};
+use crate::{constants::MAX_STORE_ROWS, path, types::build::Build};
 use ringbuffer::{AllocRingBuffer, RingBuffer};
-use std::path::PathBuf;
 
 /// Build store structure
 #[derive(Debug, Clone)]
@@ -25,23 +20,17 @@ impl BuildStore {
         }
     }
 
-    pub fn add_builds(&mut self, new_builds: Vec<Build>) {
+    pub fn add_builds(&mut self, mut new_builds: Vec<Build>) {
         tracing::debug!("Adding {} builds to cache", new_builds.len());
-        for build in new_builds {
-            self.builds.enqueue(build);
-        }
+
+        new_builds.sort_by_key(|build| build.id);
+        self.builds.extend(new_builds);
     }
 
     pub fn get_all(&self) -> Vec<Build> {
         let all: Vec<Build> = self.builds.clone().into_iter().collect();
-        tracing::debug!("Getting {} builds from cache", all.len());
+        tracing::debug!("Getting {} builds from store", all.len());
         all
-    }
-
-    fn builds_store_path() -> Result<PathBuf, String> {
-        path::config_dir()
-            .map(|dir| dir.join(BUILD_STORE_FILE_NAME))
-            .map_err(|e| format!("Failed to get config directory: {e}"))
     }
 
     pub fn get_last_notified_build_id(&self) -> Option<i64> {
@@ -49,7 +38,7 @@ impl BuildStore {
     }
 
     pub fn load(&mut self) -> Result<(), String> {
-        let store_path = Self::builds_store_path()?;
+        let store_path = path::builds_store_path()?;
 
         if !store_path.exists() {
             tracing::info!("Builds store file does not exist, creating new store");
@@ -70,12 +59,14 @@ impl BuildStore {
             }
         };
 
+        self.builds.clear();
         self.add_builds(builds);
+
         Ok(())
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let store_path = Self::builds_store_path()?;
+        let store_path = path::builds_store_path()?;
 
         // Ensure parent directory exists
         if let Some(parent) = store_path.parent() {

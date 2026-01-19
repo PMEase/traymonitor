@@ -24,7 +24,7 @@ pub async fn get_alerts(state: State<'_, Mutex<AppState>>) -> Result<GetAlertsRe
 
     Ok(GetAlertsResponse {
         alerts,
-        error: state.server_error.clone(),
+        error: state.alert_polling_error.clone(),
         last_polling_time: state.last_polling_time,
     })
 }

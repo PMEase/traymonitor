@@ -1,7 +1,7 @@
 use std::io;
 use std::path::PathBuf;
 
-use crate::constants::APP_ID;
+use crate::constants::{ALERT_STORE_FILE_NAME, APP_ID, BUILD_STORE_FILE_NAME};
 
 pub fn config_dir() -> io::Result<PathBuf> {
     let path = platform_config_dir();
@@ -17,6 +17,18 @@ pub fn logs_dir() -> io::Result<PathBuf> {
         std::fs::create_dir_all(&path)?;
     }
     Ok(path)
+}
+
+pub fn builds_store_path() -> Result<PathBuf, String> {
+    config_dir()
+        .map(|dir| dir.join(BUILD_STORE_FILE_NAME))
+        .map_err(|e| format!("Failed to get config directory: {e}"))
+}
+
+pub fn alerts_store_path() -> Result<PathBuf, String> {
+    config_dir()
+        .map(|dir| dir.join(ALERT_STORE_FILE_NAME))
+        .map_err(|e| format!("Failed to get config directory: {e}"))
 }
 
 // pub fn log_file_path() -> PathBuf {

@@ -37,9 +37,11 @@ export const BuildsView = () => {
 
     const setupListener = async () => {
       try {
-        const unlisten = await listen("refresh-page", () => {
+        const unlisten = await listen("builds-refresh-page", () => {
           if (isMounted) {
-            logger.debug("Received refresh-page event, refreshing page now...");
+            logger.debug(
+              "Received builds-refresh-page event, refreshing page now..."
+            );
             refetch();
           }
         });
@@ -50,7 +52,7 @@ export const BuildsView = () => {
           unlisten();
         }
       } catch (error) {
-        logger.error("Failed to set up refresh-page listener", {
+        logger.error("Failed to set up builds-refresh-page listener", {
           error,
         });
       }
@@ -72,7 +74,7 @@ export const BuildsView = () => {
     buildContent = <Loading className="py-6" message="Loading builds..." />;
   } else if (isError) {
     buildContent = (
-      <div className="flex bg-red-100 px-6 py-4 dark:bg-red-900">
+      <div className="flex bg-red-100 p-6 dark:bg-red-900">
         <div className="flex-0">
           <AlertCircleIcon className="size-6 text-red-900 dark:text-red-100" />
         </div>
@@ -115,8 +117,8 @@ export const BuildsView = () => {
   }
 
   return (
-    <Card className="m-2 gap-0 py-0">
-      <CardHeader className="border-gray-200 border-b py-4! font-bold text-xl dark:border-gray-800">
+    <Card className="m-0 gap-0 rounded-none border-none py-0">
+      <CardHeader className="border-gray-200 border-b py-2! font-bold text-xl dark:border-gray-800">
         <CardTitle className="flex items-center">
           <span className="flex-1">Build Notifications</span>
           <Button
@@ -131,9 +133,9 @@ export const BuildsView = () => {
       </CardHeader>
       <CardContent className="p-0">{buildContent}</CardContent>
       <CardFooter>
-        <span className="py-2 text-muted-foreground text-sm">
+        <div className="py-5 text-muted-foreground text-sm">
           Last updated: 10 seconds ago
-        </span>
+        </div>
       </CardFooter>
     </Card>
   );

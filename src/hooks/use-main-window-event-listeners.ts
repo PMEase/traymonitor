@@ -3,7 +3,6 @@ import { check } from "@tauri-apps/plugin-updater";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/lib/logger";
-import { useUIStore } from "@/store/ui-store";
 import { useCommandContext } from "./use-command-context";
 
 /**
@@ -17,35 +16,6 @@ export function useMainWindowEventListeners() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for keyboard shortcuts
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key) {
-          case ",": {
-            e.preventDefault();
-            commandContext.openPreferences();
-            break;
-          }
-          case "1": {
-            e.preventDefault();
-            const { leftSidebarVisible, setLeftSidebarVisible } =
-              useUIStore.getState();
-            setLeftSidebarVisible(!leftSidebarVisible);
-            break;
-          }
-          case "2": {
-            e.preventDefault();
-            const { rightSidebarVisible, setRightSidebarVisible } =
-              useUIStore.getState();
-            setRightSidebarVisible(!rightSidebarVisible);
-            break;
-          }
-          default:
-            break;
-        }
-      }
-    };
-
     // Set up native menu event listeners
     const setupMenuListeners = async () => {
       logger.debug("Setting up menu event listeners");
@@ -53,11 +23,13 @@ export function useMainWindowEventListeners() {
         listen("menu-view-builds", () => {
           logger.info("View builds menu event received");
           navigate("/builds");
+          navigate(0);
         }),
 
         listen("menu-view-alerts", () => {
           logger.info("View alerts menu event received");
           navigate("/alerts");
+          navigate(0);
         }),
 
         listen("menu-view-settings", () => {
@@ -90,20 +62,6 @@ export function useMainWindowEventListeners() {
           logger.debug("Preferences menu event received");
           commandContext.openPreferences();
         }),
-
-        // listen("menu-toggle-left-sidebar", () => {
-        //   logger.debug("Toggle left sidebar menu event received");
-        //   const { leftSidebarVisible, setLeftSidebarVisible } =
-        //     useUIStore.getState();
-        //   setLeftSidebarVisible(!leftSidebarVisible);
-        // }),
-
-        // listen("menu-toggle-right-sidebar", () => {
-        //   logger.debug("Toggle right sidebar menu event received");
-        //   const { rightSidebarVisible, setRightSidebarVisible } =
-        //     useUIStore.getState();
-        //   setRightSidebarVisible(!rightSidebarVisible);
-        // }),
       ]);
 
       logger.debug(
@@ -111,8 +69,6 @@ export function useMainWindowEventListeners() {
       );
       return unlisteners;
     };
-
-    document.addEventListener("keydown", handleKeyDown);
 
     let menuUnlisteners: (() => void)[] = [];
     setupMenuListeners()
@@ -125,7 +81,6 @@ export function useMainWindowEventListeners() {
       });
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
       for (const unlisten of menuUnlisteners) {
         if (unlisten && typeof unlisten === "function") {
           unlisten();

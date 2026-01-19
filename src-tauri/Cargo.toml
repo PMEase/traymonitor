@@ -24,10 +24,10 @@ tauri = { version = "=2.9.3", features = [
   "tray-icon",
   "image-png",
   "devtools",
-  "unstable",
 ] }
-open = "=3.2.0"
+# open = "=3.2.0"
 anyhow = "=1.0.100"
+thiserror = "=2.0.17"
 regex = "=1.12.2"
 reqwest = { version = "=0.13.1", features = ["json", "rustls", "query"] }
 ringbuffer = "=0.16.0"

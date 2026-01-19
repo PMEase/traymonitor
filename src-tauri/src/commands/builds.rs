@@ -23,7 +23,7 @@ pub async fn get_builds(state: State<'_, Mutex<AppState>>) -> Result<GetBuildsRe
 
     Ok(GetBuildsResponse {
         builds,
-        error: state.server_error.clone(),
+        error: state.build_polling_error.clone(),
         last_polling_time: state.last_polling_time,
     })
 }

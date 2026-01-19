@@ -1,10 +1,5 @@
-use crate::{
-    constants::{ALERT_STORE_FILE_NAME, MAX_STORE_ROWS},
-    path,
-    types::alert::Alert,
-};
+use crate::{constants::MAX_STORE_ROWS, path, types::alert::Alert};
 use ringbuffer::{AllocRingBuffer, RingBuffer};
-use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct AlertStore {
@@ -24,23 +19,16 @@ impl AlertStore {
         }
     }
 
-    pub fn add_alerts(&mut self, new_alerts: Vec<Alert>) {
-        tracing::debug!("Adding {} alerts to cache", new_alerts.len());
-        for alert in new_alerts {
-            self.alerts.enqueue(alert);
-        }
+    pub fn add_alerts(&mut self, mut new_alerts: Vec<Alert>) {
+        tracing::debug!("Adding {} alerts to store", new_alerts.len());
+        new_alerts.sort_by_key(|alert| alert.id);
+        self.alerts.extend(new_alerts);
     }
 
     pub fn get_all(&self) -> Vec<Alert> {
         let all: Vec<Alert> = self.alerts.clone().into_iter().collect();
-        tracing::debug!("Getting {} alerts from cache", all.len());
+        tracing::debug!("Getting {} alerts from store", all.len());
         all
-    }
-
-    fn alerts_store_path() -> Result<PathBuf, String> {
-        path::config_dir()
-            .map(|dir| dir.join(ALERT_STORE_FILE_NAME))
-            .map_err(|e| format!("Failed to get config directory: {e}"))
     }
 
     pub fn get_last_notified_time(&self) -> Option<i64> {
@@ -48,7 +36,7 @@ impl AlertStore {
     }
 
     pub fn load(&mut self) -> Result<(), String> {
-        let store_path = Self::alerts_store_path()?;
+        let store_path = path::alerts_store_path()?;
 
         if !store_path.exists() {
             tracing::info!("Alerts store file does not exist, creating new store");
@@ -69,20 +57,24 @@ impl AlertStore {
             }
         };
 
+        self.alerts.clear();
         self.add_alerts(alerts);
 
         Ok(())
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let store_path = Self::alerts_store_path()?;
+        let store_path = path::alerts_store_path()?;
         // Ensure parent directory exists
         if let Some(parent) = store_path.parent() {
             std::fs::create_dir_all(parent)
                 .map_err(|e| format!("Failed to create builds store directory: {e}"))?;
         }
 
-        let content = serde_json::to_string_pretty(&self.get_all())
+        let alerts = self.get_all();
+        tracing::debug!("Saving {} alerts to alerts store file", alerts.len());
+
+        let content = serde_json::to_string_pretty(&alerts)
             .map_err(|e| format!("Failed to serialize alerts: {e}"))?;
 
         // Write to a temporary file first, then rename (atomic operation)

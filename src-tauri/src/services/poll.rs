@@ -6,7 +6,7 @@ use tokio::time::sleep;
 
 use crate::{
     AppState, commands::notifications::send_native_notification,
-    services::quickbuild::QuickBuildService,
+    services::quickbuild::QuickBuildClient,
 };
 
 pub async fn start(app: AppHandle<Wry>) {
@@ -21,67 +21,87 @@ pub async fn start(app: AppHandle<Wry>) {
             continue;
         }
 
+        let poll_interval = Duration::from_secs(settings.poll_interval_in_secs as u64);
         if settings.paused {
             tracing::debug!("Polling is paused, skipping fetching notifications");
-            sleep(Duration::from_secs(10)).await;
+            sleep(poll_interval).await;
             continue;
         }
 
         // Create QuickBuild service
-        let quickbuild = QuickBuildService::builder()
+        let client = QuickBuildClient::builder()
             .host(settings.server_url.clone())
             .user(settings.user.clone())
             .token(settings.token.clone())
             .build();
 
-        let old_error = state.lock().unwrap().server_error.clone();
-        let mut current_error = None;
-        let mut should_refresh_page = false;
+        let _ = fetch_builds(&client, app.clone(), &state).await;
+        let _ = fetch_alerts(&client, app.clone(), &state).await;
 
-        let fetch_builds_result = fetch_builds(&quickbuild, app.clone(), &state).await;
-        let fetch_alerts_result = fetch_alerts(&quickbuild, app.clone(), &state).await;
+        // let mut build_should_refresh_page = false;
+        // let mut alert_should_refresh_page = false;
 
-        match fetch_builds_result {
-            Ok(len) => {
-                should_refresh_page = len > 0;
-            }
-            Err(e) => {
-                current_error = Some(e.clone());
-            }
-        }
+        // let fetch_builds_result = fetch_builds(&client, app.clone(), &state).await;
+        // let fetch_alerts_result = fetch_alerts(&client, app.clone(), &state).await;
 
-        match fetch_alerts_result {
-            Ok(len) => {
-                should_refresh_page = len > 0;
-            }
-            Err(e) => {
-                current_error = Some(e.clone());
-            }
-        }
+        // let build_state = match fetch_builds_result {
+        //     Ok(len) => {
+        //         state.lock().unwrap().build_polling_error = None;
+        //         build_should_refresh_page = len > 0 || old_build_error.is_some();
+        //     }
+        //     Err(e) => {
+        //         state.lock().unwrap().build_polling_error = Some(e.clone());
+        //         build_should_refresh_page =
+        //             old_build_error.is_none() || old_build_error != Some(e.clone());
+        //     }
+        // };
 
-        if !should_refresh_page {
-            should_refresh_page = old_error != current_error;
-        }
+        // let alert_state = match fetch_alerts_result {
+        //     Ok(len) => {
+        //         state.lock().unwrap().alert_polling_error = None;
+        //         alert_should_refresh_page = len > 0 || old_alert_error.is_some();
+        //     }
+        //     Err(e) => {
+        //         state.lock().unwrap().alert_polling_error = Some(e.clone());
+        //         alert_should_refresh_page =
+        //             old_alert_error.is_none() || old_alert_error != Some(e.clone());
+        //     }
+        // };
 
-        state.lock().unwrap().server_error = current_error;
+        // if build_state.should_refresh_page {
+        //     app.emit(
+        //         "builds-refresh-page",
+        //         PollingPayload {
+        //             error: build_state.error,
+        //         },
+        //     )
+        //     .unwrap();
+        // }
 
-        if should_refresh_page {
-            app.emit("refresh-page", ()).unwrap();
-        }
+        // if alert_should_refresh_page {
+        //     app.emit(
+        //         "alerts-refresh-page",
+        //         PollingPayload {
+        //             error: alert_state.error,
+        //         },
+        //     )
+        //     .unwrap();
+        // }
 
         state.lock().unwrap().last_polling_time = Some(OffsetDateTime::now_utc());
 
-        sleep(Duration::from_secs(settings.poll_interval_in_secs as u64)).await;
+        sleep(poll_interval).await;
     }
 }
 
-async fn fetch_builds(
-    quickbuild: &QuickBuildService,
-    app: AppHandle<Wry>,
-    state: &Mutex<AppState>,
-) -> Result<usize, String> {
+const POLLING_FAILED_MESSAGE: &str = "Polling failed, please check your connection and try again";
+
+async fn fetch_builds(client: &QuickBuildClient, app: AppHandle<Wry>, state: &Mutex<AppState>) {
     let last_notified_build_id = state.lock().unwrap().get_last_notified_build_id();
-    match quickbuild.get_builds(last_notified_build_id).await {
+    let should_refresh;
+    let old_error = state.lock().unwrap().build_polling_error.clone();
+
+    match client.get_builds(last_notified_build_id).await {
         Ok(builds) => {
             let len = builds.len();
             if len > 0 {
@@ -99,26 +119,32 @@ async fn fetch_builds(
                 let _ = state.lock().unwrap().add_builds(builds);
             }
 
-            Ok(len)
+            should_refresh = len > 0 || old_error.is_some();
+            state.lock().unwrap().build_polling_error = None;
         }
         Err(e) => {
             tracing::error!("Failed to get builds: {e}");
-            Err(format!("Polling failed: {e}"))
+            tracing::info!("Old error: {old_error:?}");
+            should_refresh = old_error != Some(POLLING_FAILED_MESSAGE.to_string());
+            state.lock().unwrap().build_polling_error = Some(POLLING_FAILED_MESSAGE.to_string());
         }
+    }
+
+    if should_refresh {
+        let _ = app.emit("builds-refresh-page", ());
     }
 }
 
-async fn fetch_alerts(
-    quickbuild: &QuickBuildService,
-    app: AppHandle<Wry>,
-    state: &Mutex<AppState>,
-) -> Result<usize, String> {
+async fn fetch_alerts(client: &QuickBuildClient, app: AppHandle<Wry>, state: &Mutex<AppState>) {
     let last_notified_time = state.lock().unwrap().get_last_notified_time();
+    let should_refresh;
+    let old_error = state.lock().unwrap().alert_polling_error.clone();
+
     tracing::info!(
         "Fetching alerts with last notified time: {:?}",
         last_notified_time
     );
-    match quickbuild.get_alerts(last_notified_time).await {
+    match client.get_alerts(last_notified_time).await {
         Ok(alerts) => {
             let len = alerts.len();
             if len > 0 {
@@ -142,11 +168,18 @@ async fn fetch_alerts(
                 let _ = state.lock().unwrap().add_alerts(alerts);
             }
 
-            Ok(len)
+            should_refresh = len > 0 || old_error.is_some();
+            state.lock().unwrap().alert_polling_error = None;
         }
         Err(e) => {
             tracing::error!("Failed to get alerts: {e}");
-            Err(format!("Polling failed: {e}"))
+            should_refresh =
+                old_error.is_none() || old_error != Some(POLLING_FAILED_MESSAGE.to_string());
+            state.lock().unwrap().alert_polling_error = Some(POLLING_FAILED_MESSAGE.to_string());
         }
+    }
+
+    if should_refresh {
+        let _ = app.emit("alerts-refresh-page", ());
     }
 }

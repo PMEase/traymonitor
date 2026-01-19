@@ -9,7 +9,7 @@ use crate::{
     types::{alert::Alert, build::Build},
 };
 
-pub struct QuickBuildService {
+pub struct QuickBuildClient {
     user: String,
     token: String,
     host: String,
@@ -17,7 +17,7 @@ pub struct QuickBuildService {
 }
 
 #[bon]
-impl QuickBuildService {
+impl QuickBuildClient {
     #[builder]
     pub fn new(user: String, token: String, host: String) -> Self {
         Self {
@@ -137,7 +137,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_builds() {
-        let service = QuickBuildService::builder()
+        let service = QuickBuildClient::builder()
             .host("http://localhost:8810".to_string())
             .user("admin".to_string())
             .token("admin".to_string())
@@ -148,7 +148,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_alerts() {
-        let service = QuickBuildService::builder()
+        let service = QuickBuildClient::builder()
             .host("http://localhost:8810".to_string())
             .user("admin".to_string())
             .token("admin".to_string())

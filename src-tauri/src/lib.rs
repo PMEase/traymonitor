@@ -27,7 +27,8 @@ pub struct AppState {
     pub settings: AppSettings,
     pub build_store: Arc<RwLock<BuildStore>>,
     pub alert_store: Arc<RwLock<AlertStore>>,
-    pub server_error: Option<String>,
+    pub build_polling_error: Option<String>,
+    pub alert_polling_error: Option<String>,
     pub last_polling_time: Option<OffsetDateTime>,
 }
 
@@ -37,7 +38,8 @@ impl AppState {
             settings,
             build_store: Arc::new(RwLock::new(builds_cache)),
             alert_store: Arc::new(RwLock::new(alert_store)),
-            server_error: None,
+            build_polling_error: None,
+            alert_polling_error: None,
             last_polling_time: None,
         }
     }
@@ -60,9 +62,9 @@ impl AppState {
             return Ok(());
         }
 
-        let mut builds_cache = self.build_store.write().unwrap();
-        builds_cache.add_builds(builds);
-        if let Err(e) = builds_cache.save() {
+        let mut builds_store = self.build_store.write().unwrap();
+        builds_store.add_builds(builds);
+        if let Err(e) = builds_store.save() {
             tracing::error!("Failed to save builds: {e}");
             Err(format!("Failed to save builds: {e}"))
         } else {
@@ -91,6 +93,10 @@ impl AppState {
     }
 
     pub fn add_alerts(&mut self, alerts: Vec<Alert>) -> Result<(), String> {
+        if alerts.is_empty() {
+            return Ok(());
+        }
+
         let mut alerts_store = self.alert_store.write().unwrap();
         alerts_store.add_alerts(alerts);
         if let Err(e) = alerts_store.save() {
