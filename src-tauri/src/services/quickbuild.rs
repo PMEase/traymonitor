@@ -44,7 +44,7 @@ impl QuickBuildClient {
     /// Get raw response as String (for cases where you need the raw text)
     async fn get_raw(&self, url: &str, query: Vec<(&str, String)>) -> Result<String, String> {
         let full_url = format!("{}/{}", self.host, url);
-        tracing::debug!("Getting raw data from {}", full_url);
+        tracing::debug!("Getting raw data from {}, query: {:?}", full_url, query);
 
         let mut builder = self
             .client

@@ -10,7 +10,7 @@ pub const DASHBOARD_WINDOW_NAME: &str = "dashboard";
 
 pub const TRAY_MONITOR_NOTIFICATION_TYPE: &str = "Tray Monitor & IDE Plugins";
 
-pub const MAX_STORE_ROWS: usize = 256;
+pub const MAX_STORE_ROWS: usize = 100;
 pub const BUILD_STORE_FILE_NAME: &str = "builds.json";
 pub const ALERT_STORE_FILE_NAME: &str = "alerts.json";
 

@@ -54,6 +54,7 @@
   --color-plum-9: var(--plum-9);
   --color-indigo-9: var(--indigo-9);
   --color-blue-9: var(--blue-9);
+  --color-brown-9: var(--brown-9);
 }
 
 :root {
@@ -99,6 +100,7 @@
   --plum-9: #ab4aba;
   --indigo-9: #3e63dd;
   --blue-9: #0090ff;
+  --brown-9: #AD7F58;
 }
 
 .dark {

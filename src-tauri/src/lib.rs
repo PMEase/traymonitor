@@ -72,6 +72,17 @@ impl AppState {
         }
     }
 
+    pub fn clear_builds(&mut self) -> Result<(), String> {
+        let mut builds_store = self.build_store.write().unwrap();
+        builds_store.clear();
+        if let Err(e) = builds_store.save() {
+            tracing::error!("Failed to save builds: {e}");
+            Err(format!("Failed to save builds: {e}"))
+        } else {
+            Ok(())
+        }
+    }
+
     pub fn get_builds(&self) -> Vec<Build> {
         let builds_cache = self.build_store.read().unwrap();
         builds_cache.get_all()
@@ -99,6 +110,17 @@ impl AppState {
 
         let mut alerts_store = self.alert_store.write().unwrap();
         alerts_store.add_alerts(alerts);
+        if let Err(e) = alerts_store.save() {
+            tracing::error!("Failed to save alerts: {e}");
+            Err(format!("Failed to save alerts: {e}"))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn clear_alerts(&mut self) -> Result<(), String> {
+        let mut alerts_store = self.alert_store.write().unwrap();
+        alerts_store.clear();
         if let Err(e) = alerts_store.save() {
             tracing::error!("Failed to save alerts: {e}");
             Err(format!("Failed to save alerts: {e}"))

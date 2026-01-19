@@ -25,6 +25,11 @@ impl AlertStore {
         self.alerts.extend(new_alerts);
     }
 
+    pub fn clear(&mut self) {
+        tracing::debug!("Clearing alerts cache");
+        self.alerts.clear();
+    }
+
     pub fn get_all(&self) -> Vec<Alert> {
         let all: Vec<Alert> = self.alerts.clone().into_iter().collect();
         tracing::debug!("Getting {} alerts from store", all.len());

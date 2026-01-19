@@ -19,6 +19,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Build } from "@/lib/bindings";
 import { logger } from "@/lib/logger";
 import { formatDuration, formatTimeAgo } from "@/lib/time";
@@ -84,6 +89,18 @@ export const BuildsView = () => {
         </div>
       </div>
     );
+  } else if (data?.builds?.length === 0) {
+    buildContent = (
+      <div className="flex bg-gray-100 px-6 py-4 dark:bg-gray-900">
+        <div className="flex-0">
+          <AlertCircleIcon className="size-6 text-gray-900 dark:text-gray-100" />
+        </div>
+        <div className="flex flex-1 flex-col gap-3 pl-2">
+          <h3 className="font-semibold">No builds to show</h3>
+          <div className="text-sm">No build notifications received yet.</div>
+        </div>
+      </div>
+    );
   } else {
     const builds = data?.builds ?? [];
     let errorMessage: React.ReactNode | null = null;
@@ -120,21 +137,30 @@ export const BuildsView = () => {
     <Card className="m-0 gap-0 rounded-none border-none py-0">
       <CardHeader className="border-gray-200 border-b py-2! font-bold text-xl dark:border-gray-800">
         <CardTitle className="flex items-center">
-          <span className="flex-1">Build Notifications</span>
-          <Button
-            disabled={isLoading}
-            onClick={() => refetch()}
-            size="icon"
-            variant="outline"
-          >
-            <RefreshCcwIcon className="size-4" />
-          </Button>
+          <span className="flex-1">Builds</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={isLoading}
+                onClick={() => refetch()}
+                size="icon"
+                variant="outline"
+              >
+                <RefreshCcwIcon
+                  className={cn("size-4", isLoading ? "animate-spin" : "")}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Refresh builds</p>
+            </TooltipContent>
+          </Tooltip>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">{buildContent}</CardContent>
       <CardFooter>
         <div className="py-5 text-muted-foreground text-sm">
-          Last updated: 10 seconds ago
+          Last updated: {formatTimeAgo(data?.lastPollingTime ?? "")}
         </div>
       </CardFooter>
     </Card>
@@ -216,7 +242,14 @@ export const BuildPanel = ({
       <div className="flex-0">{statusIcon}</div>
       <div className="flex-1">
         <div className="mb-3 flex w-full items-center">
-          <span className="flex-1 font-semibold text-md">{title}</span>
+          <div className="flex flex-1 items-center gap-2">
+            <span className="flex-1 truncate text-nowrap font-semibold text-md text-overflow-ellipsis">
+              {title}
+            </span>
+            <span className="text-nowrap text-muted-foreground text-xs">
+              #{build.id}
+            </span>
+          </div>
         </div>
         <div className="flex w-full gap-2">
           <div className="w-1/3 truncate font-semibold text-sm lg:w-1/4">

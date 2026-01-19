@@ -11,8 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Alert, AlertPriority } from "@/lib/bindings";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { Alert } from "@/lib/bindings";
 import { logger } from "@/lib/logger";
+import { formatTimeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useAlerts } from "@/services/alerts";
 
@@ -72,6 +78,18 @@ export const AlertsView = () => {
         </div>
       </div>
     );
+  } else if (data?.alerts?.length === 0) {
+    alertContent = (
+      <div className="flex bg-gray-100 px-6 py-4 dark:bg-gray-900">
+        <div className="flex-0">
+          <AlertCircleIcon className="size-6 text-gray-900 dark:text-gray-100" />
+        </div>
+        <div className="flex flex-1 flex-col gap-3 pl-2">
+          <h3 className="font-semibold">No alerts to show</h3>
+          <div className="text-sm">No alert notifications received yet.</div>
+        </div>
+      </div>
+    );
   } else {
     const alerts: Alert[] = data?.alerts ?? [];
     let errorMessage: React.ReactNode | null = null;
@@ -110,20 +128,27 @@ export const AlertsView = () => {
       <CardHeader className="border-gray-200 border-b py-2! font-bold text-xl dark:border-gray-800">
         <CardTitle className="flex items-center">
           <span className="flex-1">Alerts</span>
-          <Button
-            disabled={isLoading}
-            onClick={() => refetch()}
-            size="icon"
-            variant="outline"
-          >
-            <RefreshCcwIcon className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={isLoading}
+                onClick={() => refetch()}
+                size="icon"
+                variant="outline"
+              >
+                <RefreshCcwIcon className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Refresh alerts</p>
+            </TooltipContent>
+          </Tooltip>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">{alertContent}</CardContent>
       <CardFooter>
         <div className="py-5 text-muted-foreground text-sm">
-          Last updated: 10 seconds ago
+          Last updated: {formatTimeAgo(data?.lastPollingTime ?? "")}
         </div>
       </CardFooter>
     </Card>
@@ -140,13 +165,20 @@ const AlertPanel = ({
   return (
     <div className={cn("flex gap-2", className)}>
       <div className="flex-0">
-        <AlertPriorityLabel priority={alert.priority} />
+        <AlertPriorityLabel alert={alert} />
       </div>
       <div className="flex-1 overflow-x-hidden">
         <div className="mb-2 flex flex-col gap-1">
-          <div className="flex-1 font-semibold text-md">{alert.subject}</div>
+          <div className="flex flex-1 items-center gap-2">
+            <div className="nowrap flex-1 font-semibold text-md">
+              {alert.subject}
+            </div>
+            <div className="flex-0 text-nowrap text-muted-foreground text-xs">
+              {formatTimeAgo(new Date(alert.ctime), true)}
+            </div>
+          </div>
           <div className="text-muted-foreground text-xs">
-            {formatDateTime(alert.ctime)}
+            {formatDateTime(alert.ctime)} on {alert.trigger}
           </div>
         </div>
         <div className="flex flex-col gap-1">
@@ -157,11 +189,8 @@ const AlertPanel = ({
   );
 };
 
-const AlertPriorityLabel = ({
-  priority,
-}: {
-  priority: AlertPriority;
-}): ReactNode => {
+const AlertPriorityLabel = ({ alert }: { alert: Alert }): ReactNode => {
+  const priority = alert.priority;
   const classes = `flex items-center justify-center font-mono text-xl leading-none
   border rounded-full size-6
   `;
@@ -169,16 +198,56 @@ const AlertPriorityLabel = ({
   switch (priority) {
     case "LOW":
       return (
-        <div className={cn(classes, "border-green-9 text-green-9")}>L</div>
+        <div
+          className={cn(
+            classes,
+            alert.fixed
+              ? "border-green-9 text-green-9"
+              : "border-indigo-9 text-indigo-9"
+          )}
+        >
+          L
+        </div>
       );
     case "MEDIUM":
       return (
-        <div className={cn(classes, "border-orange-9 text-orange-9")}>M</div>
+        <div
+          className={cn(
+            classes,
+            alert.fixed
+              ? "border-green-9 text-green-9"
+              : "border-brown-9 text-brown-9"
+          )}
+        >
+          M
+        </div>
       );
     case "HIGH":
-      return <div className={cn(classes, "border-red-9 text-red-9")}>H</div>;
+      return (
+        <div
+          className={cn(
+            classes,
+            alert.fixed
+              ? "border-green-9 text-green-9"
+              : "border-red-9 text-red-9"
+          )}
+        >
+          H
+        </div>
+      );
     default:
-      return <div className={cn(classes, "border-gray-9 text-gray-9")}>?</div>;
+      return (
+        <div
+          className={cn(
+            classes,
+            alert.fixed
+              ? "border-green-9 text-green-9"
+              : "border-gray-9 text-gray-9"
+          )}
+        >
+          ?
+        </div>
+      );
   }
 };
 

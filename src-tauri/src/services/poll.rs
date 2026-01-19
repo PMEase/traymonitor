@@ -97,9 +97,9 @@ pub async fn start(app: AppHandle<Wry>) {
 const POLLING_FAILED_MESSAGE: &str = "Polling failed, please check your connection and try again";
 
 async fn fetch_builds(client: &QuickBuildClient, app: AppHandle<Wry>, state: &Mutex<AppState>) {
-    let last_notified_build_id = state.lock().unwrap().get_last_notified_build_id();
+    let last_notified_build_id = { state.lock().unwrap().get_last_notified_build_id() };
+    let old_error = { state.lock().unwrap().build_polling_error.clone() };
     let should_refresh;
-    let old_error = state.lock().unwrap().build_polling_error.clone();
 
     match client.get_builds(last_notified_build_id).await {
         Ok(builds) => {
@@ -131,14 +131,15 @@ async fn fetch_builds(client: &QuickBuildClient, app: AppHandle<Wry>, state: &Mu
     }
 
     if should_refresh {
+        tracing::info!("Emitting builds-refresh-page event");
         let _ = app.emit("builds-refresh-page", ());
     }
 }
 
 async fn fetch_alerts(client: &QuickBuildClient, app: AppHandle<Wry>, state: &Mutex<AppState>) {
-    let last_notified_time = state.lock().unwrap().get_last_notified_time();
+    let last_notified_time = { state.lock().unwrap().get_last_notified_time() };
+    let old_error = { state.lock().unwrap().alert_polling_error.clone() };
     let should_refresh;
-    let old_error = state.lock().unwrap().alert_polling_error.clone();
 
     tracing::info!(
         "Fetching alerts with last notified time: {:?}",
@@ -180,6 +181,7 @@ async fn fetch_alerts(client: &QuickBuildClient, app: AppHandle<Wry>, state: &Mu
     }
 
     if should_refresh {
+        tracing::info!("Emitting alerts-refresh-page event");
         let _ = app.emit("alerts-refresh-page", ());
     }
 }

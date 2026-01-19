@@ -25,7 +25,6 @@ import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/use-theme";
 import { logger } from "@/lib/logger";
 import { usePreferences, useSavePreferences } from "@/services/preferences";
-import { defaultPreferences } from "@/types/preferences";
 
 const formSchema = z.object({
   theme: z.enum(["system", "light", "dark"]),
@@ -62,9 +61,7 @@ export const SettingsView = () => {
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      ...(preferences ?? defaultPreferences),
-    },
+    defaultValues: preferences,
   });
 
   const { theme, setTheme } = useTheme();
@@ -134,11 +131,11 @@ export const SettingsView = () => {
   };
 
   return (
-    <Card className="m-2">
-      <CardHeader className="border-gray-200 border-b font-bold text-xl dark:border-gray-800">
+    <Card className="m-0 gap-0 rounded-none border-none py-0">
+      <CardHeader className="border-gray-200 border-b py-2! font-bold text-xl dark:border-gray-800">
         <CardTitle>Preferences</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form
           className="space-y-8"
           id="form-settings"

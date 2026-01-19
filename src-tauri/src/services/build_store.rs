@@ -27,6 +27,11 @@ impl BuildStore {
         self.builds.extend(new_builds);
     }
 
+    pub fn clear(&mut self) {
+        tracing::debug!("Clearing builds cache");
+        self.builds.clear();
+    }
+
     pub fn get_all(&self) -> Vec<Build> {
         let all: Vec<Build> = self.builds.clone().into_iter().collect();
         tracing::debug!("Getting {} builds from store", all.len());

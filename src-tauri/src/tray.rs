@@ -13,6 +13,7 @@ use crate::{
     AppState,
     commands::windows::{show_dashboard_window, show_main_window},
     constants::TRAY_ID,
+    types::settings::AppSettings,
     utils::platform::is_windows,
 };
 
@@ -37,8 +38,10 @@ pub enum TrayStatus {
 #[strum(serialize_all = "snake_case")]
 pub enum TrayItem {
     Dashboard,
-    Builds,
-    Alerts,
+    ViewBuilds,
+    ClearBuilds,
+    ViewAlerts,
+    ClearAlerts,
     Paused,
     Preferences,
     Quit,
@@ -65,15 +68,30 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&MenuItem::with_id(
             app,
-            TrayItem::Builds,
+            TrayItem::ViewBuilds,
             "Build History",
             true,
             None::<&str>,
         )?)
         .item(&MenuItem::with_id(
             app,
-            TrayItem::Alerts,
+            TrayItem::ClearBuilds,
+            "Clear Build History",
+            true,
+            None::<&str>,
+        )?)
+        .item(&PredefinedMenuItem::separator(app)?)
+        .item(&MenuItem::with_id(
+            app,
+            TrayItem::ViewAlerts,
             "Alert History",
+            true,
+            None::<&str>,
+        )?)
+        .item(&MenuItem::with_id(
+            app,
+            TrayItem::ClearAlerts,
+            "Clear Alert History",
             true,
             None::<&str>,
         )?)
@@ -127,6 +145,14 @@ pub fn update_tray_icon(app: &AppHandle, status: TrayStatus) {
     }
 }
 
+fn get_app_settings(app: &AppHandle) -> AppSettings {
+    app.state::<Mutex<AppState>>()
+        .lock()
+        .unwrap()
+        .settings
+        .clone()
+}
+
 pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = build_tray_menu(app)?;
     let app = app.clone();
@@ -139,8 +165,7 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
         .on_menu_event({
             move |app: &AppHandle, event| {
                 let item = TrayItem::try_from(event.id);
-                let state = app.state::<Mutex<AppState>>();
-                let settings = &state.lock().unwrap().settings;
+                let settings = get_app_settings(app);
                 if item == Ok(TrayItem::Quit) {
                     app.exit(0);
                     return;
@@ -148,7 +173,7 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
 
                 if !settings.is_configured() {
                     let _ = app.emit("menu-view-settings", ());
-                    let _ = show_main_window(app.clone(), Some("Settings"));
+                    let _ = show_main_window(app.clone(), Some("Preferences"));
                     return;
                 }
 
@@ -157,15 +182,27 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
                         tracing::debug!("Show dashboard event received");
                         let _ = show_dashboard_window(app.clone());
                     }
-                    Ok(TrayItem::Builds) => {
+                    Ok(TrayItem::ViewBuilds) => {
                         tracing::debug!("View builds event received");
                         let _ = app.emit("menu-view-builds", ());
                         let _ = show_main_window(app.clone(), Some("Builds"));
                     }
-                    Ok(TrayItem::Alerts) => {
+                    Ok(TrayItem::ClearBuilds) => {
+                        tracing::debug!("Clear builds event received");
+                        let state = app.state::<Mutex<AppState>>();
+                        let _ = state.lock().unwrap().clear_builds();
+                        let _ = app.emit("menu-view-builds", ());
+                    }
+                    Ok(TrayItem::ViewAlerts) => {
                         tracing::debug!("View alerts event received");
                         let _ = app.emit("menu-view-alerts", ());
                         let _ = show_main_window(app.clone(), Some("Alerts"));
+                    }
+                    Ok(TrayItem::ClearAlerts) => {
+                        tracing::debug!("Clear alerts event received");
+                        let state = app.state::<Mutex<AppState>>();
+                        let _ = state.lock().unwrap().clear_alerts();
+                        let _ = app.emit("menu-view-alerts", ());
                     }
                     Ok(TrayItem::Preferences) => {
                         tracing::debug!("Preferences event received");

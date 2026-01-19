@@ -25,6 +25,7 @@ pub struct Alert {
     pub priority: AlertPriority,
     pub category: AlertCategory,
     pub alert_message: String,
+    pub trigger: String,
     pub fixed: bool,
     pub ctime: i64,
     pub ack_time: i64,

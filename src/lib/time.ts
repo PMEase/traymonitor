@@ -1,4 +1,8 @@
-export function formatTimeAgo(date: Date | string): string {
+export function formatTimeAgo(date: Date | string, shortFmt = false): string {
+  if (!date || date === "") {
+    return "N/A";
+  }
+
   // Initialize a default date as the current date
   let _date: Date = new Date();
 
@@ -25,15 +29,19 @@ export function formatTimeAgo(date: Date | string): string {
   for (const [unit, secondsInUnit] of Object.entries(intervals)) {
     const interval: number = Math.floor(seconds / secondsInUnit);
     if (interval > 1) {
-      return `${interval} ${unit}s ago`;
+      return shortFmt
+        ? `${interval}${unit.charAt(0)}`
+        : `${interval} ${unit}s ago`;
     }
     if (interval === 1) {
-      return `${interval} ${unit} ago`;
+      return shortFmt
+        ? `${interval}${unit.charAt(0)}`
+        : `${interval} ${unit} ago`;
     }
   }
 
   // If no larger unit is found, return "just now"
-  return "just now";
+  return shortFmt ? "now" : "just now";
 }
 
 export function formatDuration(duration: number): string {

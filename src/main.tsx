@@ -5,21 +5,21 @@ import ReactDOM from "react-dom/client";
 import App from "./app";
 import { queryClient } from "./lib/query-client";
 import "./app.css";
-import { HashRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { TooltipProvider } from "./components/ui/tooltip";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <HashRouter>
+      <BrowserRouter>
         <TooltipProvider>
           <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
             <App />
             <ReactQueryDevtools initialIsOpen={false} />
           </ThemeProvider>
         </TooltipProvider>
-      </HashRouter>
+      </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>
 );

@@ -8,10 +8,15 @@ use time::OffsetDateTime;
 use crate::{AppState, types::alert::Alert};
 
 #[derive(Serialize, Type, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct GetAlertsResponse {
     pub alerts: Vec<Alert>,
     pub error: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "crate::serde::option_four_year_iso8601"
+    )]
     pub last_polling_time: Option<OffsetDateTime>,
 }
 
