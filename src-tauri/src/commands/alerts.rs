@@ -23,13 +23,17 @@ pub struct GetAlertsResponse {
 #[tauri::command]
 #[specta::specta]
 pub async fn get_alerts(state: State<'_, Mutex<AppState>>) -> Result<GetAlertsResponse, String> {
-    let state = state.lock().unwrap();
-    let mut alerts = state.get_alerts();
+    let state_guard = state
+        .lock()
+        .map_err(|e| format!("Failed to acquire lock for getting alerts: {e}"))?;
+
+    let mut alerts = state_guard.get_alerts();
+    alerts.sort_by_key(|alert| alert.ctime);
     alerts.reverse();
 
     Ok(GetAlertsResponse {
         alerts,
-        error: state.alert_polling_error.clone(),
-        last_polling_time: state.last_polling_time,
+        error: state_guard.alert_polling_error.clone(),
+        last_polling_time: state_guard.last_polling_time,
     })
 }

@@ -6,15 +6,30 @@ use tokio::time::sleep;
 
 use crate::{
     AppState, commands::notifications::send_native_notification,
-    services::quickbuild::QuickBuildClient,
+    services::quickbuild::QuickBuildClient, types::settings::AppSettings,
 };
+
+fn get_settings(state: &Mutex<AppState>) -> Result<AppSettings, String> {
+    let state_guard = state
+        .lock()
+        .map_err(|e| format!("Failed to acquire lock for getting settings: {e}"))?;
+    Ok(state_guard.settings.clone())
+}
 
 pub async fn start(app: AppHandle<Wry>) {
     tracing::info!("Starting scheduler service");
     let state = app.state::<Mutex<AppState>>();
 
     loop {
-        let settings = state.lock().unwrap().settings.clone();
+        let settings = match get_settings(&state) {
+            Ok(settings) => settings,
+            Err(e) => {
+                tracing::error!("Failed to get settings: {e}");
+                sleep(Duration::from_secs(10)).await;
+                continue;
+            }
+        };
+
         if !settings.is_configured() {
             tracing::debug!("QuickBuild settings not configured, skipping fetching notifications");
             sleep(Duration::from_secs(10)).await;
@@ -38,57 +53,17 @@ pub async fn start(app: AppHandle<Wry>) {
         let _ = fetch_builds(&client, app.clone(), &state).await;
         let _ = fetch_alerts(&client, app.clone(), &state).await;
 
-        // let mut build_should_refresh_page = false;
-        // let mut alert_should_refresh_page = false;
+        {
+            let mut state_guard = match state.lock() {
+                Ok(guard) => guard,
+                Err(e) => {
+                    tracing::error!("Failed to acquire lock for updating last polling time: {e}");
+                    continue;
+                }
+            };
 
-        // let fetch_builds_result = fetch_builds(&client, app.clone(), &state).await;
-        // let fetch_alerts_result = fetch_alerts(&client, app.clone(), &state).await;
-
-        // let build_state = match fetch_builds_result {
-        //     Ok(len) => {
-        //         state.lock().unwrap().build_polling_error = None;
-        //         build_should_refresh_page = len > 0 || old_build_error.is_some();
-        //     }
-        //     Err(e) => {
-        //         state.lock().unwrap().build_polling_error = Some(e.clone());
-        //         build_should_refresh_page =
-        //             old_build_error.is_none() || old_build_error != Some(e.clone());
-        //     }
-        // };
-
-        // let alert_state = match fetch_alerts_result {
-        //     Ok(len) => {
-        //         state.lock().unwrap().alert_polling_error = None;
-        //         alert_should_refresh_page = len > 0 || old_alert_error.is_some();
-        //     }
-        //     Err(e) => {
-        //         state.lock().unwrap().alert_polling_error = Some(e.clone());
-        //         alert_should_refresh_page =
-        //             old_alert_error.is_none() || old_alert_error != Some(e.clone());
-        //     }
-        // };
-
-        // if build_state.should_refresh_page {
-        //     app.emit(
-        //         "builds-refresh-page",
-        //         PollingPayload {
-        //             error: build_state.error,
-        //         },
-        //     )
-        //     .unwrap();
-        // }
-
-        // if alert_should_refresh_page {
-        //     app.emit(
-        //         "alerts-refresh-page",
-        //         PollingPayload {
-        //             error: alert_state.error,
-        //         },
-        //     )
-        //     .unwrap();
-        // }
-
-        state.lock().unwrap().last_polling_time = Some(OffsetDateTime::now_utc());
+            state_guard.last_polling_time = Some(OffsetDateTime::now_utc());
+        }
 
         sleep(poll_interval).await;
     }

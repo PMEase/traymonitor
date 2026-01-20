@@ -62,45 +62,59 @@ impl AppState {
             return Ok(());
         }
 
-        let mut builds_store = self.build_store.write().unwrap();
+        let mut builds_store = self
+            .build_store
+            .write()
+            .map_err(|e| format!("Failed to acquire write lock for build store: {e}"))?;
         builds_store.add_builds(builds);
-        if let Err(e) = builds_store.save() {
-            tracing::error!("Failed to save builds: {e}");
-            Err(format!("Failed to save builds: {e}"))
-        } else {
-            Ok(())
-        }
+        builds_store
+            .save()
+            .map_err(|e| format!("Failed to save builds: {e}"))
     }
 
     pub fn clear_builds(&mut self) -> Result<(), String> {
-        let mut builds_store = self.build_store.write().unwrap();
+        let mut builds_store = self
+            .build_store
+            .write()
+            .map_err(|e| format!("Failed to acquire write lock for build store: {e}"))?;
         builds_store.clear();
-        if let Err(e) = builds_store.save() {
-            tracing::error!("Failed to save builds: {e}");
-            Err(format!("Failed to save builds: {e}"))
-        } else {
-            Ok(())
-        }
+        builds_store
+            .save()
+            .map_err(|e| format!("Failed to save builds: {e}"))
     }
 
     pub fn get_builds(&self) -> Vec<Build> {
-        let builds_cache = self.build_store.read().unwrap();
-        builds_cache.get_all()
+        self.build_store
+            .read()
+            .map(|store| store.get_all())
+            .unwrap_or_else(|e| {
+                tracing::error!("Failed to acquire read lock for build store: {e}");
+                Vec::new()
+            })
     }
 
     pub fn get_last_notified_build_id(&self) -> Option<i64> {
-        let builds_store = self.build_store.read().unwrap();
-        builds_store.get_last_notified_build_id()
+        self.build_store
+            .read()
+            .ok()
+            .and_then(|store| store.get_last_notified_build_id())
     }
 
     pub fn get_alerts(&self) -> Vec<Alert> {
-        let alerts_store = self.alert_store.read().unwrap();
-        alerts_store.get_all()
+        self.alert_store
+            .read()
+            .map(|store| store.get_all())
+            .unwrap_or_else(|e| {
+                tracing::error!("Failed to acquire read lock for alert store: {e}");
+                Vec::new()
+            })
     }
 
     pub fn get_last_notified_time(&self) -> Option<i64> {
-        let alerts_store = self.alert_store.read().unwrap();
-        alerts_store.get_last_notified_time()
+        self.alert_store
+            .read()
+            .ok()
+            .and_then(|store| store.get_last_notified_time())
     }
 
     pub fn add_alerts(&mut self, alerts: Vec<Alert>) -> Result<(), String> {
@@ -108,25 +122,25 @@ impl AppState {
             return Ok(());
         }
 
-        let mut alerts_store = self.alert_store.write().unwrap();
+        let mut alerts_store = self
+            .alert_store
+            .write()
+            .map_err(|e| format!("Failed to acquire write lock for alert store: {e}"))?;
         alerts_store.add_alerts(alerts);
-        if let Err(e) = alerts_store.save() {
-            tracing::error!("Failed to save alerts: {e}");
-            Err(format!("Failed to save alerts: {e}"))
-        } else {
-            Ok(())
-        }
+        alerts_store
+            .save()
+            .map_err(|e| format!("Failed to save alerts: {e}"))
     }
 
     pub fn clear_alerts(&mut self) -> Result<(), String> {
-        let mut alerts_store = self.alert_store.write().unwrap();
+        let mut alerts_store = self
+            .alert_store
+            .write()
+            .map_err(|e| format!("Failed to acquire write lock for alert store: {e}"))?;
         alerts_store.clear();
-        if let Err(e) = alerts_store.save() {
-            tracing::error!("Failed to save alerts: {e}");
-            Err(format!("Failed to save alerts: {e}"))
-        } else {
-            Ok(())
-        }
+        alerts_store
+            .save()
+            .map_err(|e| format!("Failed to save alerts: {e}"))
     }
 }
 
@@ -198,13 +212,19 @@ pub async fn run() {
             let state = AppState::init(&app)?;
             app.manage(Mutex::new(state));
 
-            let main_win = app.get_webview_window(MAIN_WINDOW_NAME).unwrap();
+            let main_win = app
+                .get_webview_window(MAIN_WINDOW_NAME)
+                .ok_or("Main window not found")?;
             #[cfg(not(target_os = "macos"))]
-            main_win.set_always_on_top(true);
+            let _ = main_win.set_always_on_top(true);
 
-            let _ = main_win.hide();
+            if let Err(e) = main_win.hide() {
+                tracing::warn!("Failed to hide main window: {e}");
+            }
 
-            let dashboard_win = app.get_webview_window(DASHBOARD_WINDOW_NAME).unwrap();
+            let dashboard_win = app
+                .get_webview_window(DASHBOARD_WINDOW_NAME)
+                .ok_or("Dashboard window not found")?;
             // WebviewWindowBuilder::new(&app, "dashboard", WebviewUrl::default())
             //     .title("QuickBuild Tray Monitor - Dashboard")
             //     .inner_size(1200.0, 800.0)
@@ -216,9 +236,17 @@ pub async fn run() {
             let _ = dashboard_win.hide();
 
             let state = app.state::<Mutex<AppState>>();
-            let settings = state.lock().unwrap().settings.clone();
-            if settings.is_configured() {
-                let _ = dashboard_win.navigate(settings.get_dashboard_url());
+            let settings = {
+                let state_guard = state
+                    .lock()
+                    .map_err(|e| format!("Failed to acquire lock for settings: {e}"))?;
+                state_guard.settings.clone()
+            };
+
+            if settings.is_configured()
+                && let Err(e) = dashboard_win.navigate(settings.get_dashboard_url())
+            {
+                tracing::warn!("Failed to navigate dashboard window: {e}");
             }
 
             specta_builder.mount_events(&app);
@@ -242,8 +270,11 @@ pub async fn run() {
                 ..
             } = event
             {
-                let win = app.get_webview_window(label.as_str()).unwrap();
-                win.hide().unwrap();
+                if let Some(win) = app.get_webview_window(label.as_str())
+                    && let Err(e) = win.hide()
+                {
+                    tracing::warn!("Failed to hide window {}: {e}", label);
+                }
                 api.prevent_close();
             }
         });

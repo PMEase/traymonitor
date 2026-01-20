@@ -23,13 +23,16 @@ pub struct GetBuildsResponse {
 #[tauri::command]
 #[specta::specta]
 pub async fn get_builds(state: State<'_, Mutex<AppState>>) -> Result<GetBuildsResponse, String> {
-    let state = state.lock().unwrap();
-    let mut builds = state.get_builds();
+    let state_guard = state
+        .lock()
+        .map_err(|e| format!("Failed to acquire lock for getting builds: {e}"))?;
+
+    let mut builds = state_guard.get_builds();
     builds.reverse();
 
     Ok(GetBuildsResponse {
         builds,
-        error: state.build_polling_error.clone(),
-        last_polling_time: state.last_polling_time,
+        error: state_guard.build_polling_error.clone(),
+        last_polling_time: state_guard.last_polling_time,
     })
 }
