@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
+import type { GetAlertsResponse } from "@/lib/bindings";
 import { logger } from "@/lib/logger";
 
 // Query keys for preferences
