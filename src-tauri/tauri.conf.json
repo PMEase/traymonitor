@@ -86,7 +86,8 @@
   "plugins": {
     "updater": {
       "active": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA2NjNFQjA2QzcxN0JBODEKUldTQnVoZkhCdXRqQnBUZjBUL0x4Q0tUb0xuWmdtcm5UQUNmMjJ2Z3NZeVJxLzBOMVdtODRHd08K"
+      "endpoint": "https://github.com/PMEase/traymonito/releases/latest/download/latest.json",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ5MDMyMkQwRUMwOTQ3QTkKUldTcFJ3bnMwQ0lEU1ZBV1lWYnRUS1kzaXRtR2w5ZHN5bmxjZzJhb0NlMDYzTVMvOTJxU1Vvd2MK"
     }
   }
 }

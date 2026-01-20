@@ -190,6 +190,11 @@ pub async fn run() {
         builder = builder.plugin(tauri_plugin_positioner::init());
     }
 
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
     builder = builder
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notifications::init());
