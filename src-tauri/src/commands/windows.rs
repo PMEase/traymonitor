@@ -32,7 +32,7 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
     let _ = window.move_window(Position::Center);
 
     // Request user attention to ensure proper focus on Linux
-    let _ = window.request_user_attention(Some(UserAttentionType::Informational));
+    let _ = window.request_user_attention(Some(UserAttentionType::Critical));
     let _ = window.set_focus();
 
     Ok(())
@@ -71,7 +71,7 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
 
     // Request user attention to ensure proper focus on Linux
     // This helps with window managers that don't allow apps to steal focus
-    let _ = window.request_user_attention(Some(UserAttentionType::Informational));
+    let _ = window.request_user_attention(Some(UserAttentionType::Critical));
     let _ = window.set_focus();
     // let _ = window.move_window(Position::Center);
 

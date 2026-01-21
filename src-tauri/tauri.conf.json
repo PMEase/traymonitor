@@ -19,6 +19,7 @@
         "minimizable": false,
         "transparent": false,
         "decorations": true,
+        "focus": true,
         "label": "main",
         "title": "QuickBuild Tray Monitor",
         "titleBarStyle": "Overlay",
@@ -28,15 +29,19 @@
         "minWidth": 480
       },
       {
+        "fullscreen": false,
+        "resizable": true,
+        "minimizable": false,
         "transparent": false,
         "decorations": true,
-        "resizable": true,
-        "visible": false,
         "label": "dashboard",
         "title": "QuickBuild Tray Monitor - Dashboard",
-        "url": "/dashboard",
+        "titleBarStyle": "Overlay",
+        "focus": true,
         "width": 800,
-        "height": 600
+        "height": 700,
+        "minHeight": 600,
+        "minWidth": 480
       }
     ],
     "security": {
