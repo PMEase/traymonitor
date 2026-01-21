@@ -21,6 +21,7 @@
         "decorations": true,
         "label": "main",
         "title": "QuickBuild Tray Monitor",
+        "titleBarStyle": "Overlay",
         "width": 480,
         "height": 700,
         "minHeight": 700,

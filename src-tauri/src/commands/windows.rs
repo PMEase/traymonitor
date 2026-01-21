@@ -59,14 +59,15 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
     if let Some(title) = title {
         let _ = window.set_title(format!("QuickBuild Tray Monitor - {}", title).as_str());
     }
-
     let _ = window.show();
-    move_window_to_position(&window);
+    let _ = window.move_window(Position::Center);
+    // move_window_to_position(&window);
 
     // Request user attention to ensure proper focus on Linux
     // This helps with window managers that don't allow apps to steal focus
     let _ = window.request_user_attention(Some(UserAttentionType::Informational));
     let _ = window.set_focus();
+    // let _ = window.move_window(Position::Center);
 
     Ok(())
 }
