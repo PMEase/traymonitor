@@ -22,11 +22,11 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
     let window = app
         .get_webview_window(DASHBOARD_WINDOW_NAME)
         .ok_or("Dashboard window not found")
-        .unwrap();
+        .map_err(|e| format!("Failed to get dashboard window: {e}"))?;
     let _ = window.move_window(Position::TrayCenter);
     // let _ = window.eval(format!("window.location.href = '{}';", url));
     let _ = window.show();
-    window.set_focus().unwrap();
+    let _ = window.set_focus();
 
     Ok(())
 }
