@@ -26,7 +26,10 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
         .ok_or("Dashboard window not found")
         .map_err(|e| format!("Failed to get dashboard window: {e}"))?;
     let _ = window.show();
-    move_window_to_position(&window);
+    #[cfg(not(target_os = "linux"))]
+    let _ = window.move_window(Position::TrayCenter);
+    #[cfg(target_os = "linux")]
+    let _ = window.move_window(Position::Center);
 
     // Request user attention to ensure proper focus on Linux
     let _ = window.request_user_attention(Some(UserAttentionType::Informational));
@@ -60,6 +63,9 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
         let _ = window.set_title(format!("QuickBuild Tray Monitor - {}", title).as_str());
     }
     let _ = window.show();
+    #[cfg(not(target_os = "linux"))]
+    let _ = window.move_window(Position::TrayCenter);
+    #[cfg(target_os = "linux")]
     let _ = window.move_window(Position::Center);
     // move_window_to_position(&window);
 
