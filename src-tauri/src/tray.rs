@@ -14,14 +14,15 @@ use crate::{
     commands::windows::{show_dashboard_window, show_main_window},
     constants::TRAY_ID,
     types::settings::AppSettings,
-    utils::platform::is_windows,
+    utils::platform::{is_macos, is_windows},
 };
 
 const ICON_CONFIG: &[u8] = include_bytes!("../icons/tray/monitor-config.png");
 const ICON_ERROR: &[u8] = include_bytes!("../icons/tray/monitor-error.png");
 const ICON_OK: &[u8] = include_bytes!("../icons/tray/monitor-ok.png");
 const ICON_PAUSED: &[u8] = include_bytes!("../icons/tray/monitor-paused.png");
-const ICON_QB: &[u8] = include_bytes!("../icons/tray/monitor-qb.png");
+const ICON_QB_TEMPLATE: &[u8] = include_bytes!("../icons/tray/tray-icon.png");
+const ICON_QB: &[u8] = include_bytes!("../icons/tray/tray-icon-win.png");
 const ICON_STARTED: &[u8] = include_bytes!("../icons/tray/monitor-started.png");
 
 #[derive(Debug, Clone, Copy, EnumString, Display, Deserialize, PartialEq, Eq, Hash)]
@@ -116,7 +117,11 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn initial_icon() -> tauri::Result<Image<'static>> {
-    Image::from_bytes(ICON_QB)
+    if is_macos() {
+        Image::from_bytes(ICON_QB_TEMPLATE)
+    } else {
+        Image::from_bytes(ICON_QB)
+    }
 }
 
 #[allow(unused)]
@@ -159,7 +164,7 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
     let initial_icon = initial_icon()?;
     let _ = TrayIconBuilder::with_id("tray")
         .icon(initial_icon)
-        .icon_as_template(true)
+        .icon_as_template(is_macos())
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event({
