@@ -51,6 +51,7 @@ tauri-plugin-process = "=2.3.1"
 tauri-plugin-store = "=2.4.1"
 tauri-plugin-os = "=2.3.2"
 tauri-plugin-http = "2"
+tauri-runtime-wry = "=2.9.3"
 # devtools = "=0.3.4"
 
 tauri-plugin-clipboard-manager = "=2.3.2"
