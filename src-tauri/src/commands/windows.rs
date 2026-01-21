@@ -1,7 +1,17 @@
-use tauri::{Manager, UserAttentionType};
+use tauri::{Manager, UserAttentionType, WebviewWindow};
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME};
+
+/// Move window to tray center, fallback to screen center on Linux
+/// (TrayCenter position is not always available on Linux)
+fn move_window_to_position(window: &WebviewWindow) {
+    // Try TrayCenter first, fallback to Center if it fails (common on Linux)
+    if window.move_window(Position::TrayCenter).is_err() {
+        tracing::debug!("TrayCenter position not available, falling back to Center");
+        let _ = window.move_window(Position::Center);
+    }
+}
 
 #[tauri::command]
 #[specta::specta]
@@ -16,7 +26,7 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
         .ok_or("Dashboard window not found")
         .map_err(|e| format!("Failed to get dashboard window: {e}"))?;
     let _ = window.show();
-    let _ = window.move_window(Position::TrayCenter);
+    move_window_to_position(&window);
 
     // Request user attention to ensure proper focus on Linux
     let _ = window.request_user_attention(Some(UserAttentionType::Informational));
@@ -51,7 +61,7 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
     }
 
     let _ = window.show();
-    let _ = window.move_window(Position::TrayCenter);
+    move_window_to_position(&window);
 
     // Request user attention to ensure proper focus on Linux
     // This helps with window managers that don't allow apps to steal focus
