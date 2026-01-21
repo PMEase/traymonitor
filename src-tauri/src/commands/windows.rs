@@ -1,4 +1,4 @@
-use tauri::Manager;
+use tauri::{Manager, UserAttentionType};
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME};
@@ -11,21 +11,15 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
         let _ = main.hide();
     }
 
-    // let state = app.state::<Mutex<AppState>>();
-    // let settings = state.lock().unwrap().settings.clone();
-    // let url = settings.server_url.clone();
-    // let url: Url = format!("{}/lite", url)
-    //     .parse()
-    //     .map_err(|e| format!("Failed to parse URL: {e}"))
-    //     .unwrap();
-
     let window = app
         .get_webview_window(DASHBOARD_WINDOW_NAME)
         .ok_or("Dashboard window not found")
         .map_err(|e| format!("Failed to get dashboard window: {e}"))?;
-    let _ = window.move_window(Position::TrayCenter);
-    // let _ = window.eval(format!("window.location.href = '{}';", url));
     let _ = window.show();
+    let _ = window.move_window(Position::TrayCenter);
+
+    // Request user attention to ensure proper focus on Linux
+    let _ = window.request_user_attention(Some(UserAttentionType::Informational));
     let _ = window.set_focus();
 
     Ok(())
@@ -51,13 +45,17 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
 
     let window = app
         .get_webview_window(MAIN_WINDOW_NAME)
-        .ok_or("Main window not found")
-        .unwrap();
+        .ok_or("Main window not found")?;
     if let Some(title) = title {
         let _ = window.set_title(format!("QuickBuild Tray Monitor - {}", title).as_str());
     }
-    let _ = window.move_window(Position::TrayCenter);
+
     let _ = window.show();
+    let _ = window.move_window(Position::TrayCenter);
+
+    // Request user attention to ensure proper focus on Linux
+    // This helps with window managers that don't allow apps to steal focus
+    let _ = window.request_user_attention(Some(UserAttentionType::Informational));
     let _ = window.set_focus();
 
     Ok(())
