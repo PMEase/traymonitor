@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - if: ${{ matrix.runner == 'ubuntu-22.04' }}
+      - if: ${{ matrix.platform == 'linux' }}
         name: Install Linux Dependencies
         run: |
           sudo apt-get update
@@ -75,6 +75,8 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
