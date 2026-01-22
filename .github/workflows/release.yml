@@ -2,11 +2,11 @@ name: 'Release QuickBuild Tray Monitor'
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v*.*.*']
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., v1.0.0)'
+        description: 'Release QuickBuild Tray Monitor version (e.g., v1.0.0)'
         required: true
         type: string
 
@@ -22,18 +22,40 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--bundles app,dmg'
-          - platform: 'windows-latest'
-            args: '--bundles msi'
-          - platform: 'ubuntu-22.04'
-            args: '--bundles appimage'
+          # ---------- macOS ----------
+          - platform: macos
+            arch: aarch64
+            runner: macos-14
+            target: aarch64-apple-darwin
 
-    runs-on: ${{ matrix.platform }}
+          # ---------- Windows ----------
+          - platform: windows
+            arch: x86_64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+
+          - platform: windows
+            arch: aarch64
+            runner: windows-latest
+            target: aarch64-pc-windows-msvc
+
+          # ---------- Linux ----------
+          - platform: linux
+            arch: x86_64
+            runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+
+          - platform: linux
+            arch: aarch64
+            runner: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+
+    name: Build (${{ matrix.platform }} ${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
-      - if: ${{ matrix.platform == 'ubuntu-22.04' }}
+      - if: ${{ matrix.runner == 'ubuntu-22.04' }}
         name: Install Linux Dependencies
         run: |
           sudo apt-get update
@@ -84,4 +106,5 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
-          args: ${{ matrix.args }}
+          args: >
+            --target ${{ matrix.target }}
