@@ -27,8 +27,7 @@ pub async fn get_builds(state: State<'_, Mutex<AppState>>) -> Result<GetBuildsRe
         .lock()
         .map_err(|e| format!("Failed to acquire lock for getting builds: {e}"))?;
 
-    let mut builds = state_guard.get_builds();
-    builds.reverse();
+    let builds = state_guard.get_builds();
 
     Ok(GetBuildsResponse {
         builds,

@@ -31,7 +31,9 @@ impl AlertStore {
     }
 
     pub fn get_all(&self) -> Vec<Alert> {
-        let all: Vec<Alert> = self.alerts.clone().into_iter().collect();
+        let mut all: Vec<Alert> = self.alerts.clone().into_iter().collect();
+        all.sort_by_key(|alert| alert.ctime);
+        all.reverse();
         tracing::debug!("Getting {} alerts from store", all.len());
         all
     }

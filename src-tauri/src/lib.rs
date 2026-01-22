@@ -213,11 +213,14 @@ pub async fn run() {
         .setup(move |app| {
             tracing::info!("🚀 Application starting up");
 
-            let app = app.handle().clone();
-            let state = AppState::init(&app)?;
-            app.manage(Mutex::new(state));
+            let app_handle = app.handle().clone();
 
-            let main_win = app
+            specta_builder.mount_events(&app_handle);
+
+            let state = AppState::init(&app_handle)?;
+            app_handle.manage(Mutex::new(state));
+
+            let main_win = app_handle
                 .get_webview_window(MAIN_WINDOW_NAME)
                 .ok_or("Main window not found")?;
             #[cfg(not(target_os = "macos"))]
@@ -227,7 +230,7 @@ pub async fn run() {
                 tracing::warn!("Failed to hide main window: {e}");
             }
 
-            let dashboard_win = app
+            let dashboard_win = app_handle
                 .get_webview_window(DASHBOARD_WINDOW_NAME)
                 .ok_or("Dashboard window not found")?;
             // WebviewWindowBuilder::new(&app, "dashboard", WebviewUrl::default())
@@ -240,7 +243,7 @@ pub async fn run() {
 
             let _ = dashboard_win.hide();
 
-            let state = app.state::<Mutex<AppState>>();
+            let state = app_handle.state::<Mutex<AppState>>();
             let settings = {
                 let state_guard = state
                     .lock()
@@ -254,9 +257,8 @@ pub async fn run() {
                 tracing::warn!("Failed to navigate dashboard window: {e}");
             }
 
-            specta_builder.mount_events(&app);
-            tray::create_tray(&app)?;
-            tauri::async_runtime::spawn(poll::start(app.clone()));
+            tray::create_tray(&app_handle)?;
+            tauri::async_runtime::spawn(poll::start(app_handle.clone()));
 
             // NOTE: always force settings window to be a certain size
             // settings.set_size(LogicalSize {

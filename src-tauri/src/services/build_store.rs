@@ -33,7 +33,9 @@ impl BuildStore {
     }
 
     pub fn get_all(&self) -> Vec<Build> {
-        let all: Vec<Build> = self.builds.clone().into_iter().collect();
+        let mut all: Vec<Build> = self.builds.clone().into_iter().collect();
+        all.sort_by_key(|build| build.id);
+        all.reverse();
         tracing::debug!("Getting {} builds from store", all.len());
         all
     }

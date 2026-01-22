@@ -5,21 +5,6 @@ use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME};
 
-/// Force window focus on Linux using the "always on top" trick
-/// This temporarily sets the window to always on top, then removes it
-#[cfg(target_os = "linux")]
-fn force_focus_linux(window: &WebviewWindow) {
-    // Trick 1: Always on top toggle - forces window manager to bring window to front
-    let _ = window.set_always_on_top(true);
-    let _ = window.set_always_on_top(false);
-
-    // Trick 2: Unminimize in case window is minimized
-    let _ = window.unminimize();
-
-    // Trick 3: Set focus after the tricks
-    let _ = window.set_focus();
-}
-
 #[tauri::command]
 #[specta::specta]
 pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
@@ -32,19 +17,12 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
         .get_webview_window(DASHBOARD_WINDOW_NAME)
         .ok_or("Dashboard window not found")
         .map_err(|e| format!("Failed to get dashboard window: {e}"))?;
-    let _ = window.show();
 
+    window.show().ok();
+    window.unminimize().ok();
     #[cfg(not(target_os = "linux"))]
-    {
-        let _ = window.move_window(Position::TrayCenter);
-        let _ = window.set_focus();
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        let _ = window.move_window(Position::Center);
-        force_focus_linux(&window);
-    }
+    window.move_window(Position::TrayCenter).ok();
+    window.set_focus().ok();
 
     Ok(())
 }
@@ -73,19 +51,11 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
     if let Some(title) = title {
         let _ = window.set_title(format!("QuickBuild Tray Monitor - {}", title).as_str());
     }
-    let _ = window.show();
-
+    window.show().ok();
+    window.unminimize().ok();
     #[cfg(not(target_os = "linux"))]
-    {
-        let _ = window.move_window(Position::TrayCenter);
-        let _ = window.set_focus();
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        let _ = window.move_window(Position::Center);
-        force_focus_linux(&window);
-    }
+    window.move_window(Position::TrayCenter).ok();
+    window.set_focus().ok();
 
     Ok(())
 }

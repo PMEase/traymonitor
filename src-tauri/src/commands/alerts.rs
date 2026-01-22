@@ -27,9 +27,7 @@ pub async fn get_alerts(state: State<'_, Mutex<AppState>>) -> Result<GetAlertsRe
         .lock()
         .map_err(|e| format!("Failed to acquire lock for getting alerts: {e}"))?;
 
-    let mut alerts = state_guard.get_alerts();
-    alerts.sort_by_key(|alert| alert.ctime);
-    alerts.reverse();
+    let alerts = state_guard.get_alerts();
 
     Ok(GetAlertsResponse {
         alerts,
