@@ -17,21 +17,25 @@ use crate::{
     utils::platform::{is_macos, is_windows},
 };
 
-const ICON_CONFIG: &[u8] = include_bytes!("../icons/tray/monitor-config.png");
-const ICON_ERROR: &[u8] = include_bytes!("../icons/tray/monitor-error.png");
-const ICON_OK: &[u8] = include_bytes!("../icons/tray/monitor-ok.png");
-const ICON_PAUSED: &[u8] = include_bytes!("../icons/tray/monitor-paused.png");
-const ICON_QB_TEMPLATE: &[u8] = include_bytes!("../icons/tray/tray-icon.png");
-const ICON_QB: &[u8] = include_bytes!("../icons/tray/tray-icon-win.png");
-const ICON_STARTED: &[u8] = include_bytes!("../icons/tray/monitor-started.png");
+const ICON_NO_CONFIG: &[u8] = include_bytes!("../icons/tray/tray-no-config.png");
+const ICON_ERROR: &[u8] = include_bytes!("../icons/tray/tray-error.png");
+const ICON_SUCCESS: &[u8] = include_bytes!("../icons/tray/tray-success.png");
+const ICON_RUNNING: &[u8] = include_bytes!("../icons/tray/tray-running.png");
+const ICON_PAUSED: &[u8] = include_bytes!("../icons/tray/tray-paused.png");
+#[cfg(target_os = "macos")]
+const ICON_QB_MAC: &[u8] = include_bytes!("../icons/tray/tray-icon.png");
+#[cfg(target_os = "windows")]
+const ICON_QB_WIN: &[u8] = include_bytes!("../icons/tray/tray-icon-win.png");
+#[cfg(target_os = "linux")]
+const ICON_QB_LINUX: &[u8] = include_bytes!("../icons/tray/tray-icon-linux.png");
 
 #[derive(Debug, Clone, Copy, EnumString, Display, Deserialize, PartialEq, Eq, Hash)]
 #[strum(serialize_all = "snake_case")]
 pub enum TrayStatus {
-    Config,
-    Started,
+    NoConfig,
+    Running,
     Paused,
-    Ok,
+    Success,
     Error,
 }
 
@@ -117,20 +121,30 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn initial_icon() -> tauri::Result<Image<'static>> {
-    if is_macos() {
-        Image::from_bytes(ICON_QB_TEMPLATE)
-    } else {
-        Image::from_bytes(ICON_QB)
+    #[cfg(target_os = "macos")]
+    {
+        Image::from_bytes(ICON_QB_MAC)
     }
+    #[cfg(target_os = "windows")]
+    {
+        Image::from_bytes(ICON_QB_WIN)
+    }
+    #[cfg(target_os = "linux")]
+    {
+        Image::from_bytes(ICON_QB_LINUX)
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    Err(tauri::Error::Other("Unsupported platform".to_string()))
 }
 
 #[allow(unused)]
 fn get_tray_status_icon(status: TrayStatus) -> tauri::Result<Image<'static>> {
     match status {
-        TrayStatus::Config => Ok(Image::from_bytes(ICON_CONFIG)?),
-        TrayStatus::Started => Ok(Image::from_bytes(ICON_STARTED)?),
+        TrayStatus::NoConfig => Ok(Image::from_bytes(ICON_NO_CONFIG)?),
+        TrayStatus::Running => Ok(Image::from_bytes(ICON_RUNNING)?),
         TrayStatus::Paused => Ok(Image::from_bytes(ICON_PAUSED)?),
-        TrayStatus::Ok => Ok(Image::from_bytes(ICON_OK)?),
+        TrayStatus::Success => Ok(Image::from_bytes(ICON_SUCCESS)?),
         TrayStatus::Error => Ok(Image::from_bytes(ICON_ERROR)?),
     }
 }
