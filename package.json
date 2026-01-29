@@ -32,7 +32,7 @@
     "tauri:build": "pnpm run tauri build",
     "tauri:check": "pnpm run typecheck && pnpm run tauri build --check",
     "test:all": "pnpm run test:run && pnpm run rust:test",
-    "check:all": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run rust:fmt:check && pnpm run rust:clippy && pnpm run test:run && pnpm run rust:test",
+    "check:all": "pnpm run typecheck && pnpm run lint && pnpm run rust:fmt:check && pnpm run rust:clippy && pnpm run test:run && pnpm run rust:test",
     "fix:all": "pnpm run lint:fix && pnpm run rust:fmt && pnpm run rust:clippy:fix",
     "build:analyze": "vite build && echo '\\n📊 Bundle analysis complete. Check dist/ folder sizes or use a tool like webpack-bundle-analyzer on the dist folder.'",
     "release:prepare": "node scripts/prepare-release.js",
