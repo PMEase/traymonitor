@@ -9,7 +9,8 @@ import {
   Loader2Icon,
   RefreshCcwIcon,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,8 +33,20 @@ import { useBuilds } from "@/services/builds";
 
 export const BuildsView = () => {
   // const navigate = useNavigate();
+  const location = useLocation();
+  const prevLocationRef = useRef<string | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useBuilds();
+
+  // Refetch data when route changes to this page
+  useEffect(() => {
+    // Refetch if we're navigating to /builds from a different route
+    if (prevLocationRef.current !== "/builds") {
+      logger.debug("Route changed to /builds, refreshing data");
+      refetch();
+    }
+    prevLocationRef.current = location.pathname;
+  }, [location.pathname, refetch]);
 
   // Listen for new-builds-available event and refetch data
   useEffect(() => {

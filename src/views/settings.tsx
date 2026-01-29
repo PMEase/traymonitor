@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/use-theme";
 import { logger } from "@/lib/logger";
@@ -316,7 +317,15 @@ export const SettingsView = () => {
             />
           </FieldGroup>
           <Field className="justify-end" orientation="horizontal">
-            <Button className="w-full" form="form-settings" type="submit">
+            <Button
+              className="w-full"
+              disabled={form.formState.isSubmitting}
+              form="form-settings"
+              type="submit"
+            >
+              {form.formState.isSubmitting && (
+                <Spinner className="size-4 animate-spin" />
+              )}
               Save Settings
             </Button>
           </Field>
@@ -338,7 +347,6 @@ export const validateServerUrl = async (
     const statusCode = await fetch(versionUrl, {
       method: "GET",
       headers: {
-        Accept: "application/json",
         Authorization: `Basic ${btoa(`${user}:${token}`)}`,
       },
     })

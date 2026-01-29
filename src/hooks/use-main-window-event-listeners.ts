@@ -23,13 +23,11 @@ export function useMainWindowEventListeners() {
         listen("menu-view-builds", () => {
           logger.info("View builds menu event received");
           navigate("/builds");
-          navigate(0);
         }),
 
         listen("menu-view-alerts", () => {
           logger.info("View alerts menu event received");
           navigate("/alerts");
-          navigate(0);
         }),
 
         listen("menu-view-settings", () => {

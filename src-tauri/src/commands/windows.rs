@@ -1,7 +1,7 @@
 use tauri::Manager;
 #[cfg(target_os = "linux")]
 use tauri::WebviewWindow;
-use tauri_plugin_positioner::{Position, WindowExt};
+// use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::constants::{DASHBOARD_WINDOW_NAME, MAIN_WINDOW_NAME};
 
@@ -20,8 +20,8 @@ pub fn show_dashboard_window(app: tauri::AppHandle) -> Result<(), String> {
 
     window.show().ok();
     window.unminimize().ok();
-    #[cfg(not(target_os = "linux"))]
-    window.move_window(Position::TrayCenter).ok();
+    // #[cfg(not(target_os = "linux"))]
+    // window.move_window(Position::TrayCenter).ok();
     window.set_focus().ok();
 
     Ok(())
@@ -53,8 +53,8 @@ pub fn show_main_window(app: tauri::AppHandle, title: Option<&str>) -> Result<()
     }
     window.show().ok();
     window.unminimize().ok();
-    #[cfg(not(target_os = "linux"))]
-    window.move_window(Position::TrayCenter).ok();
+    // #[cfg(not(target_os = "linux"))]
+    // window.move_window(Position::TrayCenter).ok();
     window.set_focus().ok();
 
     Ok(())

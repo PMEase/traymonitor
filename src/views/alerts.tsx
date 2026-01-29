@@ -1,7 +1,8 @@
 import { listen } from "@tauri-apps/api/event";
 import { format } from "date-fns";
 import { AlertCircleIcon, RefreshCcwIcon } from "lucide-react";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,20 @@ import { cn } from "@/lib/utils";
 import { useAlerts } from "@/services/alerts";
 
 export const AlertsView = () => {
+  const location = useLocation();
+  const prevLocationRef = useRef<string | null>(null);
+
   const { data, isLoading, isError, error, refetch } = useAlerts();
+
+  // Refetch data when route changes to this page
+  useEffect(() => {
+    // Refetch if we're navigating to /alerts from a different route
+    if (prevLocationRef.current !== "/alerts") {
+      logger.debug("Route changed to /alerts, refreshing data");
+      refetch();
+    }
+    prevLocationRef.current = location.pathname;
+  }, [location.pathname, refetch]);
 
   // Listen for new-builds-available event and refetch data
   useEffect(() => {
