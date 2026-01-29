@@ -98,7 +98,12 @@ jobs:
             ## 🚀 QuickBuild Tray Monitor ${{ github.ref_name || inputs.version }}
 
             ### Installation Instructions
-            - **macOS**: Download the `.dmg` file and drag to Applications folder
+            - **macOS**: Download the `.dmg` file and drag to Applications folder. As we don't sign the app, you need run below commands before run the app, otherwise, the app are not able to start successfully:
+            ```
+            cd /Applications
+            xattr -rd com.apple.provenance QuickBuild\ Tray\ Monitor.app
+            xattr -rd com.apple.quarantine QuickBuild\\ Tray\\ Monitor.app
+            ```
 
             ### Auto-Updates
             Existing users will receive automatic update notifications.
