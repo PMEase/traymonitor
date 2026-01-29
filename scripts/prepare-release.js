@@ -99,7 +99,7 @@ async function prepareRelease() {
 
     // Run npm install to update lock files
     console.log('\n📦 Updating lock files...')
-    exec('npm install', { silent: true })
+    exec('pnpm install --frozen-lockfile', { silent: true })
     console.log('✅ Lock files updated')
 
     // Verify configurations

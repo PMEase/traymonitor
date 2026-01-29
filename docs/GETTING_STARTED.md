@@ -27,14 +27,14 @@ Ensure you have the following installed:
 2. **Install dependencies**:
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Start development**:
 
    ```bash
-   npm run dev        # React dev server only
-   npm run tauri:dev  # Full Tauri app (recommended)
+   pnpm run dev        # React dev server only
+   pnpm run tauri:dev  # Full Tauri app (recommended)
    ```
 
 4. **Verify everything works**:
