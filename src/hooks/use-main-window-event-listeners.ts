@@ -47,9 +47,15 @@ export function useMainWindowEventListeners() {
                     "success"
                   );
                 } else if (version === "error") {
-                  commandContext.showToast("Failed to check for updates", "error");
+                  commandContext.showToast(
+                    "Failed to check for updates",
+                    "error"
+                  );
                 } else {
-                  commandContext.showToast(`Update available: ${version}`, "info");
+                  commandContext.showToast(
+                    `Update available: ${version}`,
+                    "info"
+                  );
                 }
               },
             });
