@@ -1,5 +1,6 @@
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
+import { commands } from "@/lib/bindings";
 import { logger } from "@/lib/logger";
 
 export interface UpdateFlowOptions {
@@ -36,12 +37,18 @@ export async function runUpdateFlow(
     });
     onUpdateAvailable?.(update.version);
 
+    // Show main window so the user sees the confirm dialog (app may start with window hidden)
+    try {
+      await commands.showMainWindow(null);
+      await new Promise((r) => setTimeout(r, 400));
+    } catch {
+      // Ignore if window already visible or command fails
+    }
+
     // User confirmation for download (native dialog for updater flow)
     // biome-ignore lint: native confirm dialog for updater flow
     const shouldUpdate = window.confirm(
-      `A new version ${update.version} is available.\n\n
-      Current version: ${update.currentVersion}\n\n
-      Would you like to download and install this update?`
+      `A new version ${update.version} is available.\n\nCurrent version: ${update.currentVersion}\n\nWould you like to download and install this update?`
     );
 
     if (!shouldUpdate) {
