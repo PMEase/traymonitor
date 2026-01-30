@@ -5,7 +5,7 @@ use crate::commands::alerts::{self, GetAlertsResponse};
 use crate::commands::builds::GetBuildsResponse;
 use crate::path;
 
-use crate::commands::{builds, notifications, settings, windows};
+use crate::commands::{app, builds, notifications, settings, windows};
 use crate::types::alert::{Alert, AlertCategory, AlertPriority};
 use crate::types::build::Build;
 use crate::types::settings::AppSettings;
@@ -22,17 +22,9 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
             windows::close_dashboard_window,
             windows::show_main_window,
             windows::close_main_window,
+            app::get_app_info,
             builds::get_builds,
             alerts::get_alerts,
-            // window::open_external_url,
-            // recovery::save_emergency_data,
-            // recovery::load_emergency_data,
-            // recovery::cleanup_old_recovery_files,
-            // quick_pane::show_quick_pane,
-            // quick_pane::dismiss_quick_pane,
-            // quick_pane::toggle_quick_pane,
-            // quick_pane::get_default_quick_pane_shortcut,
-            // quick_pane::update_quick_pane_shortcut,
         ])
         .error_handling(tauri_specta::ErrorHandlingMode::Throw)
         .typ::<AppSettings>()

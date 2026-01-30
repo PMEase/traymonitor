@@ -35,6 +35,11 @@ export function useMainWindowEventListeners() {
           navigate("/settings");
         }),
 
+        listen("menu-view-about", () => {
+          logger.debug("About menu event received");
+          navigate("/about");
+        }),
+
         listen("menu-check-updates", async () => {
           logger.debug("Check for updates menu event received");
           try {

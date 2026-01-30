@@ -49,6 +49,7 @@ pub enum TrayItem {
     ClearAlerts,
     Paused,
     Preferences,
+    About,
     Quit,
 }
 
@@ -105,6 +106,13 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             app,
             TrayItem::Preferences,
             "Preferences",
+            true,
+            None::<&str>,
+        )?)
+        .item(&MenuItem::with_id(
+            app,
+            TrayItem::About,
+            "About",
             true,
             None::<&str>,
         )?)
@@ -227,6 +235,11 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
                         tracing::debug!("Preferences event received");
                         let _ = app.emit("menu-view-settings", ());
                         let _ = show_main_window(app.clone(), Some("Settings"));
+                    }
+                    Ok(TrayItem::About) => {
+                        tracing::debug!("About event received");
+                        let _ = app.emit("menu-view-about", ());
+                        let _ = show_main_window(app.clone(), Some("About"));
                     }
                     _ => {
                         tracing::error!("Unhandled tray item event");

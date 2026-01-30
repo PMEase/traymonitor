@@ -5,6 +5,7 @@ import Layout from "./components/layout/layout";
 import { initializeCommandSystem } from "./lib/commands";
 import { logger } from "./lib/logger";
 import { runUpdateFlow } from "./lib/updater";
+import { AboutView } from "./views/about";
 import { AlertsView } from "./views/alerts";
 import { BuildsView } from "./views/builds";
 import { MainView } from "./views/main";
@@ -42,6 +43,7 @@ function App() {
         <Routes>
           <Route Component={MainView} path="/" />
           <Route Component={SettingsView} path="/settings" />
+          <Route Component={AboutView} path="/about" />
           <Route Component={BuildsView} path="/builds" />
           <Route Component={AlertsView} path="/alerts" />
         </Routes>

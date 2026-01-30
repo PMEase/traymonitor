@@ -39,6 +39,9 @@ async showMainWindow(title: string | null) : Promise<null> {
 async closeMainWindow() : Promise<null> {
     return await TAURI_INVOKE("close_main_window");
 },
+async getAppInfo() : Promise<[string, string]> {
+    return await TAURI_INVOKE("get_app_info");
+},
 async getBuilds() : Promise<GetBuildsResponse> {
     return await TAURI_INVOKE("get_builds");
 },

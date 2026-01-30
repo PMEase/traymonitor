@@ -49,6 +49,10 @@
           "url": "https://*:*"
         }
       ]
-    }
+    },
+    "http:allow-fetch",
+    "http:allow-fetch-cancel",
+    "http:allow-fetch-send",
+    "http:allow-fetch-read-body"
   ]
 }
