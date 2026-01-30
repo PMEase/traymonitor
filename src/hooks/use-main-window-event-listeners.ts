@@ -1,8 +1,8 @@
 import { listen } from "@tauri-apps/api/event";
-import { check } from "@tauri-apps/plugin-updater";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/lib/logger";
+import { runUpdateFlow } from "@/lib/updater";
 import { useCommandContext } from "./use-command-context";
 
 /**
@@ -38,20 +38,23 @@ export function useMainWindowEventListeners() {
         listen("menu-check-updates", async () => {
           logger.debug("Check for updates menu event received");
           try {
-            const update = await check();
-            if (update) {
-              commandContext.showToast(
-                `Update available: ${update.version}`,
-                "info"
-              );
-            } else {
-              commandContext.showToast(
-                "You are running the latest version",
-                "success"
-              );
-            }
-          } catch (error) {
-            logger.error("Update check failed:", { error: String(error) });
+            await runUpdateFlow({
+              silent: false,
+              onUpdateAvailable: (version) => {
+                if (version === "none") {
+                  commandContext.showToast(
+                    "You are running the latest version",
+                    "success"
+                  );
+                } else if (version === "error") {
+                  commandContext.showToast("Failed to check for updates", "error");
+                } else {
+                  commandContext.showToast(`Update available: ${version}`, "info");
+                }
+              },
+            });
+          } catch {
+            // Error toast already shown via onUpdateAvailable("error") when applicable
             commandContext.showToast("Failed to check for updates", "error");
           }
         }),
