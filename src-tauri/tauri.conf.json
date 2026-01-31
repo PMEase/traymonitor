@@ -96,7 +96,9 @@
   "plugins": {
     "updater": {
       "active": true,
-      "endpoint": "https://github.com/PMEase/traymonitor/releases/latest/download/latest.json",
+      "endpoints": [
+        "https://github.com/PMEase/traymonitor/releases/latest/download/latest.json"
+      ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1OUYwNjNFM0E2M0MwRjgKUldUNHdHTTZQZ2FmOWRaM294bFZUOEx4cXFBYjcyTDNGaWtoV0dWUllwdjd5ZlVkazVWaStQT3gK"
     }
   }
