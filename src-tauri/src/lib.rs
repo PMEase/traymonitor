@@ -215,6 +215,13 @@ pub async fn run() {
 
             let app_handle = app.handle().clone();
 
+            #[cfg(target_os = "macos")]
+            {
+                if let Err(e) = app_handle.set_activation_policy(tauri::ActivationPolicy::Accessory) {
+                    tracing::warn!("Failed to hide dock icon: {e}");
+                }
+            }
+
             specta_builder.mount_events(&app_handle);
 
             let state = AppState::init(&app_handle)?;
