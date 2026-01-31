@@ -217,7 +217,8 @@ pub async fn run() {
 
             #[cfg(target_os = "macos")]
             {
-                if let Err(e) = app_handle.set_activation_policy(tauri::ActivationPolicy::Accessory) {
+                if let Err(e) = app_handle.set_activation_policy(tauri::ActivationPolicy::Accessory)
+                {
                     tracing::warn!("Failed to hide dock icon: {e}");
                 }
             }
