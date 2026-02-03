@@ -1,6 +1,6 @@
 [package]
 name = "tray-monitor"
-version = "1.0.11"
+version = "1.0.12"
 description = "Tray monitor for QuickBuild"
 authors = ["PMEase"]
 edition = "2024"
