@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_notifications::NotificationsExt;
 
-use crate::{constants::DASHBOARD_WINDOW_NAME, constants::MAIN_WINDOW_NAME, AppState};
+use crate::{AppState, constants::DASHBOARD_WINDOW_NAME, constants::MAIN_WINDOW_NAME};
 
 /// Sends a native system notification.
 /// On mobile platforms, returns an error as notifications are not yet supported.
