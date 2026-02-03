@@ -1,3 +1,4 @@
+import { confirm } from "@tauri-apps/plugin-dialog";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { commands } from "@/lib/bindings";
@@ -45,10 +46,15 @@ export async function runUpdateFlow(
       // Ignore if window already visible or command fails
     }
 
-    // User confirmation for download (native dialog for updater flow)
-    // biome-ignore lint: native confirm dialog for updater flow
-    const shouldUpdate = window.confirm(
-      `A new version ${update.version} is available.\n\nCurrent version: ${update.currentVersion}\n\nWould you like to download and install this update?`
+    // User confirmation for download (native Tauri dialog - works even when app is in foreground)
+    const shouldUpdate = await confirm(
+      `A new version ${update.version} is available.\n\nCurrent version: ${update.currentVersion}\n\nWould you like to download and install this update?`,
+      {
+        title: "Update Available",
+        kind: "info",
+        okLabel: "Download & Install",
+        cancelLabel: "Later",
+      }
     );
 
     if (!shouldUpdate) {
@@ -80,10 +86,15 @@ export async function runUpdateFlow(
 
     logger.info("Update installed successfully");
 
-    // User confirmation for restart (native dialog for updater flow)
-    // biome-ignore lint: native confirm dialog for updater flow
-    const shouldRestart = window.confirm(
-      "Update installed successfully.\n\nThe application needs to restart to apply the update. Would you like to restart now?"
+    // User confirmation for restart (native Tauri dialog - works even when app is in foreground)
+    const shouldRestart = await confirm(
+      "Update installed successfully.\n\nThe application needs to restart to apply the update. Would you like to restart now?",
+      {
+        title: "Update Installed",
+        kind: "info",
+        okLabel: "Restart Now",
+        cancelLabel: "Later",
+      }
     );
 
     if (shouldRestart) {

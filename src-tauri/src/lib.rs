@@ -197,7 +197,8 @@ pub async fn run() {
 
     builder = builder
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_notifications::init());
+        .plugin(tauri_plugin_notifications::init())
+        .plugin(tauri_plugin_dialog::init());
 
     builder
         .plugin(tauri_plugin_store::Builder::new().build())

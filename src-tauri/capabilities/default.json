@@ -33,6 +33,8 @@
     "positioner:default",
     "process:default",
     "process:allow-restart",
+    "dialog:default",
+    "dialog:allow-confirm",
     {
       "identifier": "http:default",
       "allow": [
