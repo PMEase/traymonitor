@@ -130,19 +130,3 @@ impl QuickBuildClient {
             .await
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_get_builds() {
-        let service = QuickBuildClient::builder()
-            .host("http://localhost:8810".to_string())
-            .user("admin".to_string())
-            .token("admin".to_string())
-            .build();
-        let builds = service.get_builds(Some(12)).await.unwrap();
-        println!("{}", serde_json::to_string_pretty(&builds).unwrap());
-    }
-}
