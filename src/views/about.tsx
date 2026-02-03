@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 import { commands } from "@/lib/bindings";
 import { runUpdateFlow } from "@/lib/updater";
 
@@ -17,6 +18,7 @@ const COPYRIGHT = "Copyright © 2025 PMEase. All rights reserved.";
 export const AboutView = () => {
   const [appName, setAppName] = useState<string>("");
   const [appVersion, setAppVersion] = useState<string>("");
+  const [isChecking, setIsChecking] = useState<boolean>(false);
 
   useEffect(() => {
     commands
@@ -31,8 +33,16 @@ export const AboutView = () => {
       });
   }, []);
 
-  const handleCheckUpdates = () => {
-    runUpdateFlow({ silent: false });
+  const handleCheckUpdates = async () => {
+    if (isChecking) {
+      return;
+    }
+    setIsChecking(true);
+    try {
+      await runUpdateFlow({ silent: false });
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   return (
@@ -62,9 +72,11 @@ export const AboutView = () => {
         </p>
         <Button
           className="w-fit"
+          disabled={isChecking}
           onClick={handleCheckUpdates}
           variant="outline"
         >
+          {isChecking && <Spinner className="mr-2 size-4 animate-spin" />}
           Check for Updates
         </Button>
       </CardContent>
