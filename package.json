@@ -1,7 +1,7 @@
 {
   "name": "tray-monitor",
   "private": true,
-  "version": "1.0.14",
+  "version": "1.0.15",
   "type": "module",
   "author": "PMEase Inc.",
   "copyright": "Copyright © 2025 PMEase. All rights reserved.",
