@@ -22,7 +22,7 @@ export async function runUpdateFlow(
 
   try {
     logger.info("Checking for updates...");
-    
+
     // Set timeout for update check (20 seconds)
     const timeoutMs = 20_000;
     const timeoutPromise = new Promise<null>((_, reject) => {
@@ -30,7 +30,7 @@ export async function runUpdateFlow(
         reject(new Error("Update check timeout after 20 seconds"));
       }, timeoutMs);
     });
-    
+
     const checkPromise = check();
     const update = await Promise.race([checkPromise, timeoutPromise]);
 
