@@ -343,8 +343,17 @@ export const validateServerUrl = async (
   const versionUrl = `${serverUrl}/rest/version`;
   logger.info("Validating server URL", { versionUrl, user, token });
 
+  const timeoutMs = 20_000; // 20 seconds timeout
+
   try {
-    const statusCode = await fetch(versionUrl, {
+    const timeoutPromise = new Promise<number>((_, reject) => {
+      setTimeout(() => {
+        logger.error("Request timeout after 20 seconds");
+        reject(new Error("Request timeout after 20 seconds"));
+      }, timeoutMs);
+    });
+
+    const fetchPromise = fetch(versionUrl, {
       method: "GET",
       headers: {
         Authorization: `Basic ${btoa(`${user}:${token}`)}`,
@@ -358,6 +367,8 @@ export const validateServerUrl = async (
         logger.error("Failed to validate server URL", { error });
         return 503;
       });
+
+    const statusCode = await Promise.race([fetchPromise, timeoutPromise]);
     return statusCode;
   } catch (error) {
     logger.error("Failed to validate server URL", { error });
