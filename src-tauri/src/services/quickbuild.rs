@@ -145,15 +145,4 @@ mod tests {
         let builds = service.get_builds(Some(12)).await.unwrap();
         println!("{}", serde_json::to_string_pretty(&builds).unwrap());
     }
-
-    #[tokio::test]
-    async fn test_get_alerts() {
-        let service = QuickBuildClient::builder()
-            .host("http://localhost:8810".to_string())
-            .user("admin".to_string())
-            .token("admin".to_string())
-            .build();
-        let alerts = service.get_alerts(None).await.unwrap();
-        println!("{}", serde_json::to_string_pretty(&alerts).unwrap());
-    }
 }
