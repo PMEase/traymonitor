@@ -29,7 +29,7 @@
     "core:tray:default",
     "core:tray:allow-get-by-id",
     "store:default",
-    "notifications:default",
+    "notification:default",
     "positioner:default",
     "process:default",
     "process:allow-restart",

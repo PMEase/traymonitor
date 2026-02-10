@@ -197,7 +197,7 @@ pub async fn run() {
 
     builder = builder
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_notifications::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init());
 
     builder
@@ -268,12 +268,6 @@ pub async fn run() {
 
             tray::create_tray(&app_handle)?;
             tauri::async_runtime::spawn(poll::start(app_handle.clone()));
-
-            // NOTE: always force settings window to be a certain size
-            // settings.set_size(LogicalSize {
-            //     width: SETTINGS_WINDOW_WIDTH,
-            //     height: SETTINGS_WINDOW_HEIGHT,
-            // })?;
 
             Ok(())
         })

@@ -5,7 +5,7 @@ use crate::commands::alerts::{self, GetAlertsResponse};
 use crate::commands::builds::GetBuildsResponse;
 use crate::path;
 
-use crate::commands::{app, builds, notifications, settings, windows};
+use crate::commands::{app, builds, settings, windows};
 use crate::types::alert::{Alert, AlertCategory, AlertPriority};
 use crate::types::build::Build;
 use crate::types::settings::AppSettings;
@@ -15,7 +15,7 @@ pub fn generate_bindings() -> Builder<tauri::Wry> {
         .commands(collect_commands![
             settings::load_settings,
             settings::save_settings,
-            notifications::send_native_notification,
+            // notifications::send_native_notification,
             path::get_config_dir,
             path::get_logs_dir,
             windows::show_dashboard_window,

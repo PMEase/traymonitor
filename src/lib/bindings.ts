@@ -14,13 +14,6 @@ async loadSettings() : Promise<AppSettings> {
 async saveSettings(settings: AppSettings) : Promise<null> {
     return await TAURI_INVOKE("save_settings", { settings });
 },
-/**
- * Sends a native system notification.
- * On mobile platforms, returns an error as notifications are not yet supported.
- */
-async sendNativeNotification(title: string, body: string | null) : Promise<null> {
-    return await TAURI_INVOKE("send_native_notification", { title, body });
-},
 async getConfigDir() : Promise<string> {
     return await TAURI_INVOKE("get_config_dir");
 },
